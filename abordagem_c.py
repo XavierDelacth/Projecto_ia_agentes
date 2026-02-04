@@ -820,11 +820,21 @@ class BaselineC_AStar:
         self.setup_agents()
     
     def setup_agents(self):
-        """Criar mÃºltiplos agentes A*"""
+        """Criar múltiplos agentes A*"""
+        # Marcar posição inicial (0,0) como explorada ANTES de criar os agentes
+        initial_pos = (0, 0)
+        cell_content = self.env.get_cell(*initial_pos)
+        
+        # Adicionar à memória compartilhada
+        self.shared_memory.explored.add(initial_pos)
+        self.shared_memory.cell_knowledge[initial_pos]['explored'] = True
+        self.shared_memory.cell_knowledge[initial_pos]['type'] = cell_content
+        self.shared_memory.cell_knowledge[initial_pos]['safe'] = True
+        
+        # Criar os agentes
         for i in range(self.num_agents):
             agent = AgentAStar(agent_id=i, start_pos=(0, 0))
             self.agents.append(agent)
-    
     def run(self):
         """Executar simulaÃ§Ã£o com mÃºltiplos agentes A*"""
         start_time = time.time()

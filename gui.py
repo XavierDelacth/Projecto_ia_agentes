@@ -453,12 +453,13 @@ class IAProjectGUI:
             if is_approach_c and simulation.shared_memory.flag_position:
                 fx, fy = simulation.shared_memory.flag_position
                 visual_grid[fx, fy] = 5  # Bandeira (roxo)
-            # Marcar posições dos agentes vivos
-            for agent in simulation.agents:
-                if agent.alive:
-                    x, y = agent.position
-                    visual_grid[x, y] = 4  # Agente
         
+        
+        # Marcar posições dos agentes vivos
+        for agent in simulation.agents:
+            if agent.alive:
+                x, y = agent.position
+                visual_grid[x, y] = 4  # Agente
         # Configurar mapa de cores (adicionar roxo para bandeira)
         cmap = plt.cm.colors.ListedColormap(['white', 'red', 'lightblue', 'gold', 'green', 'purple'])
         bounds = [0, 1, 2, 3, 4, 5, 6]
