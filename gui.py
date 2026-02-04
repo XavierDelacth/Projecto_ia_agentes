@@ -7,6 +7,7 @@ import threading
 import time
 from collections import deque
 import pandas as pd
+from gui_integration import integrate_comparison_system
 
 # Importar as classes que já criamos
 from abordagem_a import (
@@ -41,6 +42,7 @@ class IAProjectGUI:
         
         # Criar interface
         self.setup_ui()
+        self.comparison_ext = integrate_comparison_system(self)
         
     def setup_styles(self):
         """Configurar estilos para a interface"""
@@ -919,17 +921,175 @@ class IAProjectGUI:
         self.reset_buttons()
     
     def run_comparison(self):
-        """Executar comparação entre abordagens"""
+        """Executar comparação entre abordagens - VERSÃO CORRIGIDA"""
         try:
-            self.log("Iniciando comparação entre abordagens...", "INFO")
-            
-            # Executar comparação em thread separada
-            comparison_thread = threading.Thread(target=self.execute_comparison)
-            comparison_thread.daemon = True
-            comparison_thread.start()
-            
+            # Usar o sistema de comparação avançada se disponível
+            if hasattr(self, 'comparison_ext'):
+                self.comparison_ext.open_comparison_window()
+            else:
+                # Fallback: criar janela simples com dados do JSON
+                self.open_simple_comparison()
+                
         except Exception as e:
             self.log(f"Erro na comparação: {str(e)}", "ERROR")
+            import traceback
+            traceback.print_exc()
+            
+    def open_simple_comparison(self):
+        """Abre comparação simples usando dados salvos"""
+        try:
+            import json
+            from pathlib import Path
+            import tkinter as tk
+            from tkinter import ttk, messagebox
+            import matplotlib.pyplot as plt
+            from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+            import numpy as np
+            
+            # Carregar dados do JSON
+            json_file = Path("simulation_results/all_results.json")
+            
+            if not json_file.exists():
+                messagebox.showwarning("Aviso", "Nenhum dado salvo!\n\nExecute simulações primeiro.")
+                return
+            
+            with open(json_file, 'r', encoding='utf-8') as f:
+                all_results = json.load(f)
+            
+            # Criar janela
+            window = tk.Toplevel(self.root)
+            window.title("Comparação de Abordagens")
+            window.geometry("1200x800")
+            
+            # Notebook
+            notebook = ttk.Notebook(window)
+            notebook.pack(fill='both', expand=True, padx=10, pady=10)
+            
+            # Aba de Gráficos
+            graph_frame = ttk.Frame(notebook)
+            notebook.add(graph_frame, text="📊 Gráficos")
+            
+            # Criar figura
+            fig, axes = plt.subplots(1, 3, figsize=(14, 5))
+            fig.suptitle('Comparação por Abordagem', fontsize=14, fontweight='bold')
+            
+            colors_map = {
+                'homogeneous': '#e67e22',
+                'heterogeneous': '#9b59b6',
+                'baseline': '#e74c3c'
+            }
+            
+            for idx, (approach, ax) in enumerate(zip(['A', 'B', 'C'], axes)):
+                results = all_results.get(approach, [])
+                
+                if not results:
+                    ax.text(0.5, 0.5, f'Abordagem {approach}\n\nSem dados\n\nExecute simulações',
+                        ha='center', va='center', fontsize=12)
+                    ax.set_title(f'Abordagem {approach}', fontweight='bold')
+                    ax.axis('off')
+                    continue
+                
+                # Agrupar por tipo
+                groups = {}
+                for r in results:
+                    gt = r['group_type']
+                    if gt not in groups:
+                        groups[gt] = []
+                    groups[gt].append(r)
+                
+                # Calcular médias
+                group_names = []
+                group_values = []
+                group_colors = []
+                
+                # Métrica principal por abordagem
+                if approach == 'A':
+                    metric_key = 'treasure_percentage'
+                    title = 'Tesouros (%)'
+                elif approach == 'B':
+                    metric_key = 'explored_percentage'
+                    title = 'Explorado (%)'
+                else:  # C
+                    metric_key = 'success_rate'
+                    title = 'Taxa Sucesso'
+                
+                for gt_name in ['homogeneous', 'heterogeneous', 'baseline']:
+                    if gt_name in groups:
+                        values = [r['metrics'].get(metric_key, 0) for r in groups[gt_name]]
+                        if values:
+                            group_names.append(gt_name.title()[:5])
+                            group_values.append(np.mean(values))
+                            group_colors.append(colors_map[gt_name])
+                
+                if group_names:
+                    bars = ax.bar(group_names, group_values, color=group_colors, alpha=0.8, edgecolor='black')
+                    
+                    # Valores nas barras
+                    for bar, val in zip(bars, group_values):
+                        height = bar.get_height()
+                        ax.text(bar.get_x() + bar.get_width()/2., height,
+                            f'{val:.1f}',
+                            ha='center', va='bottom', fontweight='bold')
+                    
+                    ax.set_title(f'Abordagem {approach}', fontweight='bold')
+                    ax.set_ylabel(title)
+                    ax.grid(axis='y', alpha=0.3)
+                else:
+                    ax.text(0.5, 0.5, 'Sem dados', ha='center', va='center')
+                    ax.set_title(f'Abordagem {approach}', fontweight='bold')
+            
+            plt.tight_layout()
+            
+            # Embed
+            canvas = FigureCanvasTkAgg(fig, graph_frame)
+            canvas.draw()
+            canvas.get_tk_widget().pack(fill='both', expand=True)
+            
+            # Aba de Dados
+            data_frame = ttk.Frame(notebook)
+            notebook.add(data_frame, text="📋 Dados")
+            
+            # Texto com resumo
+            text = tk.Text(data_frame, wrap='word', font=('Consolas', 10))
+            text.pack(fill='both', expand=True, padx=10, pady=10)
+            
+            summary = "="*60 + "\n"
+            summary += "RESUMO DOS DADOS SALVOS\n"
+            summary += "="*60 + "\n\n"
+            
+            for approach in ['A', 'B', 'C']:
+                results = all_results.get(approach, [])
+                summary += f"\nABORDAGEM {approach}: {len(results)} simulações\n"
+                summary += "-"*40 + "\n"
+                
+                # Agrupar
+                groups = {}
+                for r in results:
+                    gt = r['group_type']
+                    if gt not in groups:
+                        groups[gt] = 0
+                    groups[gt] += 1
+                
+                for gt, count in groups.items():
+                    summary += f"  • {gt.title()}: {count} simulações\n"
+            
+            summary += "\n" + "="*60 + "\n"
+            summary += "Use 'Comparação Avançada' para análise completa\n"
+            
+            text.insert('1.0', summary)
+            text.config(state='disabled')
+            
+            # Botão fechar
+            btn_frame = ttk.Frame(window)
+            btn_frame.pack(fill='x', padx=10, pady=10)
+            ttk.Button(btn_frame, text="❌ Fechar", command=window.destroy).pack(side='right')
+            
+            self.log("Comparação simples aberta", "INFO")
+            
+        except Exception as e:
+            self.log(f"Erro ao abrir comparação simples: {str(e)}", "ERROR")
+            import traceback
+            traceback.print_exc()
     
     def execute_comparison(self):
         """Executar comparação completa"""
