@@ -664,15 +664,149 @@ class ApproachCSimulation:
             print(log)
 
 # ============================================
-# 6. BASELINE: A* PARA ABORDAGEM C
+# 6. BASELINE: A* COLABORATIVO PARA ABORDAGEM C
 # ============================================
 
+class AgentAStar:
+    """Agente que usa A* para encontrar a bandeira"""
+    def __init__(self, agent_id, start_pos=(0, 0)):
+        self.id = agent_id
+        self.position = start_pos
+        self.alive = True
+        self.steps_taken = 0
+        self.treasures_collected = 0
+        self.bombs_defused = 0
+        self.path = []  # Caminho planejado
+        self.path_index = 0  # Índice atual no caminho
+        self.flag_found = False
+        
+    def plan_path_astar(self, goal, env, shared_memory):
+        """Planeja caminho usando A* evitando bombas conhecidas"""
+        import heapq
+        
+        start = self.position
+        
+        def heuristic(pos):
+            return abs(pos[0] - goal[0]) + abs(pos[1] - goal[1])
+        
+        frontier = []
+        heapq.heappush(frontier, (0, start))
+        came_from = {start: None}
+        cost_so_far = {start: 0}
+        
+        while frontier:
+            current = heapq.heappop(frontier)[1]
+            
+            if current == goal:
+                break
+            
+            for neighbor in env.get_neighbors(*current):
+                # Evitar bombas conhecidas
+                if neighbor in shared_memory.bombs_found:
+                    continue
+                
+                cell = env.get_cell(*neighbor)
+                if cell == 'B':
+                    # Descobriu nova bomba durante planejamento
+                    shared_memory.bombs_found.add(neighbor)
+                    continue
+                
+                new_cost = cost_so_far[current] + 1
+                if neighbor not in cost_so_far or new_cost < cost_so_far[neighbor]:
+                    cost_so_far[neighbor] = new_cost
+                    priority = new_cost + heuristic(neighbor)
+                    heapq.heappush(frontier, (priority, neighbor))
+                    came_from[neighbor] = current
+        
+        # Reconstruir caminho
+        if goal in came_from:
+            path = []
+            current = goal
+            while current != start:
+                path.append(current)
+                current = came_from[current]
+            path.reverse()
+            return path
+        
+        return []  # Sem caminho
+    
+    def choose_action(self, shared_memory, env):
+        """Escolhe próxima ação baseada no caminho A*"""
+        if not self.alive:
+            return None
+        
+        # Se bandeira já foi encontrada por outro agente, parar
+        if shared_memory.flag_found:
+            return None
+        
+        # Se não tem caminho ou caminho foi invalidado, replanejear
+        if not self.path or self.path_index >= len(self.path):
+            goal = shared_memory.flag_position
+            if goal:
+                self.path = self.plan_path_astar(goal, env, shared_memory)
+                self.path_index = 0
+        
+        # Se ainda não tem caminho válido, ficar parado
+        if not self.path or self.path_index >= len(self.path):
+            return None
+        
+        # Retornar próximo passo no caminho
+        next_pos = self.path[self.path_index]
+        self.path_index += 1
+        return next_pos
+    
+    def move_to(self, new_position, shared_memory, env):
+        """Move agente para nova posição"""
+        if not self.alive or new_position is None:
+            return "Agente inativo"
+        
+        old_pos = self.position
+        self.position = new_position
+        self.steps_taken += 1
+        
+        # Explorar nova célula
+        x, y = new_position
+        cell_content = env.get_cell(x, y)
+        
+        # Atualizar memória compartilhada
+        log_msg = shared_memory.update_explored(new_position, cell_content, self.id, env)
+        
+        # Consequências da ação
+        if cell_content == 'T':
+            self.treasures_collected += 1
+            self.bombs_defused += 1
+            log_msg += f" | Tesouros: {self.treasures_collected}"
+        elif cell_content == 'B':
+            if self.bombs_defused > 0:
+                self.bombs_defused -= 1
+                log_msg += " | BOMBA DESATIVADA!"
+                shared_memory.cell_knowledge[new_position]['safe'] = True
+            else:
+                self.alive = False
+                log_msg += " | AGENTE DESTRUÍDO"
+                # Invalidar caminho
+                self.path = []
+        elif cell_content == 'F':
+            self.flag_found = True
+            log_msg += " | 🚩 BANDEIRA ENCONTRADA!"
+        
+        return log_msg
+    
+    def train_models(self, shared_memory=None, env=None):
+        """Compatibilidade com GUI - não usado em A*"""
+        pass
+
+
 class BaselineC_AStar:
-    """Baseline C: A* para encontrar a bandeira"""
-    def __init__(self, bomb_ratio=0.3, treasure_count=10, max_steps=500):
+    """Baseline C: Múltiplos agentes usando A* colaborativo"""
+    def __init__(self, num_agents=4, bomb_ratio=0.3, treasure_count=10, max_steps=500):
         self.env = EnvironmentC(bomb_ratio=bomb_ratio, treasure_count=treasure_count)
+        self.shared_memory = SharedMemoryC(flag_position=self.env.flag_position)
+        self.num_agents = num_agents
         self.max_steps = max_steps
-        self.path = []
+        self.agents = []
+        self.logs = []
+        
         self.metrics = {
             'flag_found': False,
             'execution_time': 0,
@@ -681,64 +815,59 @@ class BaselineC_AStar:
             'path_length': 0,
             'treasures_found': 0,
             'total_treasures': treasure_count,
-            'agents_alive': 1
+            'agents_alive': num_agents
         }
+        
+        # Criar agentes
+        self.setup_agents()
     
-    def heuristic(self, position):
-        """Distância Manhattan para a bandeira"""
-        if self.env.flag_position:
-            return abs(position[0] - self.env.flag_position[0]) + abs(position[1] - self.env.flag_position[1])
-        return 0
+    def setup_agents(self):
+        """Criar múltiplos agentes A*"""
+        for i in range(self.num_agents):
+            agent = AgentAStar(agent_id=i, start_pos=(0, 0))
+            self.agents.append(agent)
     
     def run(self):
+        """Executar simulação com múltiplos agentes A*"""
         start_time = time.time()
+        step = 0
         
-        start = (0, 0)
-        goal = self.env.flag_position
-        
-        if not goal:
-            self.metrics['execution_time'] = time.time() - start_time
-            return self.metrics
-        
-        # A* algorithm
-        frontier = []
-        heapq.heappush(frontier, (0, start))
-        came_from = {start: None}
-        cost_so_far = {start: 0}
-        
-        while frontier and len(cost_so_far) < self.max_steps:
-            current = heapq.heappop(frontier)[1]
+        while step < self.max_steps:
+            step += 1
+            agents_alive = len([a for a in self.agents if a.alive])
             
-            if current == goal:
+            if agents_alive == 0:
                 break
             
-            for neighbor in self.env.get_neighbors(*current):
-                cell = self.env.get_cell(*neighbor)
-                if cell == 'B':
-                    continue  # Evitar bombas
+            # Cada agente executa sua ação
+            for agent in self.agents:
+                if not agent.alive:
+                    continue
                 
-                new_cost = cost_so_far[current] + 1
-                if neighbor not in cost_so_far or new_cost < cost_so_far[neighbor]:
-                    cost_so_far[neighbor] = new_cost
-                    priority = new_cost + self.heuristic(neighbor)
-                    heapq.heappush(frontier, (priority, neighbor))
-                    came_from[neighbor] = current
-        
-        # Reconstruir caminho
-        if goal in came_from:
-            current = goal
-            while current != start:
-                self.path.append(current)
-                current = came_from[current]
-            self.path.append(start)
-            self.path.reverse()
+                # Escolher próxima posição usando A*
+                next_pos = agent.choose_action(self.shared_memory, self.env)
+                
+                if next_pos:
+                    log_msg = agent.move_to(next_pos, self.shared_memory, self.env)
             
-            self.metrics['flag_found'] = True
-            self.metrics['success'] = True
-            self.metrics['path_length'] = len(self.path)
+            # Verificar se bandeira foi encontrada
+            if self.shared_memory.flag_found:
+                self.metrics['success'] = True
+                self.metrics['flag_found'] = True
+                break
         
-        self.metrics['steps_taken'] = len(self.path)
-        self.metrics['execution_time'] = time.time() - start_time
+        # Calcular métricas finais
+        end_time = time.time()
+        self.metrics['execution_time'] = end_time - start_time
+        self.metrics['agents_alive'] = len([a for a in self.agents if a.alive])
+        self.metrics['steps_taken'] = step
+        self.metrics['treasures_found'] = len(self.shared_memory.treasures_collected)
+        
+        # Caminho do agente que encontrou (se houver)
+        for agent in self.agents:
+            if agent.flag_found:
+                self.metrics['path_length'] = agent.steps_taken
+                break
         
         return self.metrics
 

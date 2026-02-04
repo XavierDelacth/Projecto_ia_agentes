@@ -566,8 +566,8 @@ class IAProjectGUI:
     def run_simulation_thread(self, approach, num_agents, bomb_ratio, treasure_count, max_steps, group_type):
         """Função executada na thread de simulação"""
         try:
-            # IMPORTANTE: Baseline B agora é tratado como simulação normal
-            if group_type == "baseline" and approach != "B":
+            # IMPORTANTE: Baselines B e C agora são tratados como simulação normal (com visualização)
+            if group_type == "baseline" and approach == "A":
                 self.run_baseline_simulation(approach, bomb_ratio, treasure_count, max_steps)
                 return
             
@@ -603,6 +603,7 @@ class IAProjectGUI:
                 if group_type == "baseline":
                     # Baseline C: A*
                     self.current_simulation = BaselineC_AStar(
+                        num_agents=num_agents,
                         bomb_ratio=bomb_ratio,
                         treasure_count=treasure_count,
                         max_steps=max_steps
