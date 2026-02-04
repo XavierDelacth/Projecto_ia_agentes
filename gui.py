@@ -689,16 +689,28 @@ class IAProjectGUI:
         """Executar um passo da simulação"""
         self.current_simulation.logs.append(f"\n--- Passo {step} ---")
         
+        # ✅ FIX: FASE 1 - Todos os agentes escolhem suas ações ANTES de qualquer um se mover
+        actions = {}
         for agent in self.current_simulation.agents:
             if not agent.alive:
+                actions[agent.id] = None
                 continue
             
             # Treinar modelos periodicamente
             if step % 10 == 0:
                 agent.train_models(self.current_simulation.shared_memory, self.current_simulation.env)
             
-            # Escolher e executar ação
+            # Escolher ação (SEM executar ainda)
             next_pos = agent.choose_action(self.current_simulation.shared_memory, self.current_simulation.env)
+            actions[agent.id] = next_pos
+        
+        # ✅ FIX: FASE 2 - Agora todos executam seus movimentos
+        for agent in self.current_simulation.agents:
+            if not agent.alive:
+                continue
+            
+            # Executar ação escolhida na Fase 1
+            next_pos = actions.get(agent.id)
             log_msg = agent.move_to(next_pos, self.current_simulation.shared_memory, self.current_simulation.env)
             
             # Adicionar log na interface
