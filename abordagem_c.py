@@ -90,7 +90,7 @@ class EnvironmentC:
 # ============================================
 
 class SharedMemoryC:
-    def __init__(self, env_size=10):
+    def __init__(self, env_size=10, flag_position=None):
         self.explored = set()
         self.treasures_found = set()
         self.treasures_collected = set()
@@ -100,7 +100,7 @@ class SharedMemoryC:
         self.cell_knowledge = {}
         self.env_size = env_size
         self.flag_found = False
-        self.flag_position = None
+        self.flag_position = flag_position  # BANDEIRA JÁ CONHECIDA DESDE O INÍCIO
         
         # Custos estimados de deslocação (para otimização de caminho)
         self.movement_costs = {}
@@ -119,6 +119,10 @@ class SharedMemoryC:
         
         # Posição inicial (0,0) tem custo 0
         self.movement_costs[(0, 0)] = 0
+        
+        # MARCAR POSIÇÃO DA BANDEIRA COMO CONHECIDA (mas não explorada)
+        if self.flag_position:
+            self.cell_knowledge[self.flag_position]['type'] = 'F'  # Tipo conhecido desde o início
     
     def update_explored(self, position, content, agent_id, env):
         """Atualiza memória com nova exploração"""
@@ -514,7 +518,7 @@ class ApproachCSimulation:
     def __init__(self, num_agents=4, bomb_ratio=0.3, treasure_count=10, 
                  homogeneous=True, max_steps=500):
         self.env = EnvironmentC(bomb_ratio=bomb_ratio, treasure_count=treasure_count)
-        self.shared_memory = SharedMemoryC()
+        self.shared_memory = SharedMemoryC(flag_position=self.env.flag_position)  # Passar posição da bandeira
         self.num_agents = num_agents
         self.homogeneous = homogeneous
         self.max_steps = max_steps

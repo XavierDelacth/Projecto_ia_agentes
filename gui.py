@@ -474,6 +474,14 @@ class IAProjectGUI:
                     self.ax.text(j, i, '?', ha='center', va='center', 
                                 fontsize=8, color='gray', alpha=0.5)
         
+        # Adicionar símbolo de bandeira conhecida (mas não alcançada)
+        if is_approach_c and simulation.shared_memory.flag_position:
+            fx, fy = simulation.shared_memory.flag_position
+            # Se bandeira não foi alcançada ainda, mostrar símbolo
+            if not simulation.shared_memory.flag_found:
+                self.ax.text(fy, fx, '🚩', ha='center', va='center', 
+                            fontsize=16, color='purple', fontweight='bold')
+        
         # Configurações do gráfico
         if is_approach_b:
             approach = "B"
