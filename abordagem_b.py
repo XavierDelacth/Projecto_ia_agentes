@@ -456,7 +456,7 @@ class ApproachBSimulation:
         self.setup_agents()
     
     def setup_agents(self):
-        """Criar múltiplos agentes BFS"""
+        """Criar agentes baseado no tipo (homogêneo, heterogêneo ou baseline)"""
         # Marcar posição inicial como explorada ANTES de criar agentes
         initial_pos = (0, 0)
         cell_content = self.env.get_cell(*initial_pos)
@@ -465,17 +465,10 @@ class ApproachBSimulation:
         self.shared_memory.cell_knowledge[initial_pos]['type'] = cell_content
         self.shared_memory.cell_knowledge[initial_pos]['safe'] = True
         
-        # Criar agentes
+        # Criar agentes - AgentB para homogêneo/heterogêneo
         for i in range(self.num_agents):
-            agent = AgentBFS(agent_id=i, start_pos=initial_pos)
+            agent = AgentB(agent_id=i, start_pos=initial_pos)
             self.agents.append(agent)
-            
-            # Adicionar vizinhos de (0,0) à fila BFS de cada agente
-            neighbors = self.env.get_neighbors(*initial_pos)
-            for neighbor in neighbors:
-                if neighbor not in agent.personal_visited:
-                    agent.personal_visited.add(neighbor)
-                    agent.bfs_queue.append(neighbor)
 
     def run_simulation(self, verbose=False):
         """Executa simulação completa"""
