@@ -438,10 +438,14 @@ class IAProjectGUI:
             # Abordagem A/C: marcar tesouros encontrados
             for (x, y) in simulation.shared_memory.treasures_found:
                 visual_grid[x, y] = 3  # Tesouro
-            # Marcar bombas encontradas
+            
+            # Marcar bombas encontradas (SOMENTE as que foram EXPLORADAS)
+            # Isso garante que bombas só aparecem quando agentes as acionam
             for (x, y) in simulation.shared_memory.bombs_found:
-                visual_grid[x, y] = 1  # Bomba
-            # Marcar células livres exploradas
+                # Verificar se a célula foi de fato explorada (agente passou por ela)
+                if (x, y) in simulation.shared_memory.explored:
+                    visual_grid[x, y] = 1  # Bomba
+            
             for (x, y) in simulation.shared_memory.explored:
                 if visual_grid[x, y] == 0:  # Não é tesouro ou bomba
                     visual_grid[x, y] = 2  # Livre explorada
