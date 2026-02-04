@@ -1,6 +1,6 @@
-# abordagem_b.py - CORRIGIDO
+# abordagem_b.py - VERSÃO CORRIGIDA FINAL
 # Abordagem B: Exploração completa do ambiente (100% células livres)
-# Baseado na estrutura da abordagem_a.py, mas SEM TESOUROS
+# Baseline: N agentes BFS colaborativos (MESMA POLÍTICA, SEM ML)
 
 import numpy as np
 import random
@@ -116,20 +116,14 @@ class SharedMemoryB:
             self.bombs_found.add(position)
             self.cell_knowledge[position]['safe'] = False
             log_msg += " (BOMBA)"
-            # Quando encontra bomba, NÃO marcar vizinhas como inseguras
-            # Deixar como desconhecidas para os agentes decidirem
         else:
             self.cell_knowledge[position]['safe'] = True
             log_msg += " (seguro)"
             
             # IMPORTANTE: Marcar vizinhas não exploradas como seguras
-            # Isso simula a lógica de que se exploramos uma célula livre,
-            # as vizinhas têm maior probabilidade de serem seguras
             neighbors = env.get_neighbors(x, y)
             for neighbor in neighbors:
                 if not self.cell_knowledge[neighbor]['explored']:
-                    # Marcar como segura para exploração futura
-                    # MAS apenas se não for uma bomba conhecida
                     if neighbor not in self.bombs_found:
                         self.cell_knowledge[neighbor]['safe'] = True
             
@@ -153,15 +147,165 @@ class SharedMemoryB:
         return safe_unknown
 
 # ============================================
-# 3. AGENTE PARA ABORDAGEM B
+# 3. AGENTE BFS PARA BASELINE (N AGENTES)
+# ============================================
+
+class AgentBFS:
+    """
+    Agente BFS PURO para baseline
+    - Executa APENAS BFS (sem ML, sem inferência)
+    - Todos os agentes usam a MESMA política
+    - Colaboração apenas via memória compartilhada
+    """
+    def __init__(self, agent_id, start_pos=(0, 0)):
+        self.id = agent_id
+        self.position = start_pos
+        self.alive = True
+        self.steps_taken = 0
+        self.treasures_collected = 0  # Sempre 0 para baseline B
+        self.bombs_defused = 0
+        
+        # BFS state
+        self.exploration_queue = deque([start_pos])
+        self.personal_visited = set([start_pos])
+        
+        # Direção preferencial baseada no ID (para dividir espaço)
+        self.preferred_direction = agent_id % 4  # 0=cima, 1=baixo, 2=esquerda, 3=direita
+        
+    def choose_action(self, shared_memory, env):
+        """
+        BFS PURO: escolhe próxima célula da fila
+        SEM pesos, SEM ML, SEM decisão inteligente
+        """
+        if not self.alive:
+            return None
+        
+        x, y = self.position
+        
+        # 1. Prioridade: vizinhos IMEDIATOS não explorados
+        neighbors = env.get_neighbors(x, y)
+        unexplored = [n for n in neighbors if n not in shared_memory.explored]
+        
+        if unexplored:
+            # Ordenar por direção preferencial (divisão de espaço)
+            unexplored.sort(key=lambda pos: self._direction_priority(pos))
+            return unexplored[0]
+        
+        # 2. Procurar células próximas não exploradas (BFS limitado)
+        nearby = self._find_nearby_unexplored(shared_memory, env, radius=3)
+        if nearby:
+            return nearby[0]
+        
+        # 3. BFS tradicional: escolher da fila
+        while self.exploration_queue:
+            candidate = self.exploration_queue.popleft()
+            
+            if candidate not in shared_memory.explored:
+                return candidate
+        
+        # 4. Expandir fila se necessário
+        self._expand_queue(env, shared_memory)
+        
+        if self.exploration_queue:
+            return self.exploration_queue.popleft()
+        
+        return None
+    
+    def _direction_priority(self, neighbor):
+        """Calcula prioridade baseada na direção preferencial"""
+        nx, ny = neighbor
+        cx, cy = self.position
+        dx, dy = nx - cx, ny - cy
+        
+        # Mapear direção
+        if dx == -1:
+            direction = 0  # cima
+        elif dx == 1:
+            direction = 1  # baixo
+        elif dy == -1:
+            direction = 2  # esquerda
+        else:
+            direction = 3  # direita
+        
+        # Prioridade: menor valor = maior prioridade
+        if direction == self.preferred_direction:
+            return 0
+        return abs(direction - self.preferred_direction) + random.random() * 0.1
+    
+    def _find_nearby_unexplored(self, shared_memory, env, radius=3):
+        """Encontra células não exploradas próximas"""
+        x, y = self.position
+        candidates = []
+        
+        for dx in range(-radius, radius + 1):
+            for dy in range(-radius, radius + 1):
+                nx, ny = x + dx, y + dy
+                
+                if 0 <= nx < env.size and 0 <= ny < env.size:
+                    pos = (nx, ny)
+                    if pos not in shared_memory.explored:
+                        distance = abs(dx) + abs(dy)
+                        candidates.append((distance, pos))
+        
+        candidates.sort(key=lambda x: x[0])
+        return [pos for _, pos in candidates]
+    
+    def _expand_queue(self, env, shared_memory):
+        """Expande fila de exploração"""
+        x, y = self.position
+        neighbors = env.get_neighbors(x, y)
+        
+        for neighbor in neighbors:
+            if neighbor not in self.personal_visited:
+                self.personal_visited.add(neighbor)
+                self.exploration_queue.append(neighbor)
+    
+    def move_to(self, new_position, shared_memory, env):
+        """Move agente para nova posição"""
+        if not self.alive or new_position is None:
+            return "Agente inativo"
+        
+        self.position = new_position
+        self.steps_taken += 1
+        
+        x, y = new_position
+        cell_content = env.get_cell(x, y)
+        log_msg = shared_memory.update_explored(new_position, cell_content, self.id, env)
+        
+        # Adicionar vizinhos à fila
+        neighbors = env.get_neighbors(x, y)
+        for neighbor in neighbors:
+            if neighbor not in self.personal_visited:
+                self.personal_visited.add(neighbor)
+                self.exploration_queue.append(neighbor)
+        
+        # Consequências
+        if cell_content == 'B':
+            if self.bombs_defused > 0:
+                self.bombs_defused -= 1
+                log_msg += " | BOMBA DESATIVADA!"
+                shared_memory.cell_knowledge[new_position]['safe'] = True
+            else:
+                self.alive = False
+                log_msg += " | AGENTE DESTRUÍDO"
+        
+        return log_msg
+    
+    def train_models(self, shared_memory=None, env=None):
+        """Método vazio - compatibilidade com GUI"""
+        pass
+
+# ============================================
+# 4. AGENTE ML PARA GRUPOS (HOMOGÊNEO/HETEROGÊNEO)
 # ============================================
 
 class AgentB:
+    """Agente com ML para grupos homogêneo/heterogêneo"""
     def __init__(self, agent_id, start_pos=(0, 0), inference_weights=None):
         self.id = agent_id
         self.position = start_pos
         self.alive = True
-        self.treasures_collected = 0  # Sempre 0 na abordagem B
+        self.treasures_collected = 0
         self.bombs_defused = 0
         self.steps_taken = 0
         self.last_action = None
@@ -191,11 +335,9 @@ class AgentB:
     
     def initialize_basic_knowledge(self):
         """Inicializa conhecimento básico para evitar previsões sem dados"""
-        # Adicionar ponto inicial como livre
         self.training_data['features'].append([0, 0])
         self.training_data['labels'].append('L')
         
-        # Adicionar alguns pontos hipotéticos
         for _ in range(5):
             x, y = random.randint(0, 9), random.randint(0, 9)
             self.training_data['features'].append([x, y])
@@ -342,7 +484,7 @@ class AgentB:
         # Consequências da ação
         if cell_content == 'B':
             if self.bombs_defused > 0:
-                # Usa poder para desativar bomba (não aplicável em B, mas mantido por compatibilidade)
+                # Usa poder para desativar bomba
                 self.bombs_defused -= 1
                 log_msg += " | BOMBA DESATIVADA!"
                 if shared_memory is not None:
@@ -356,7 +498,7 @@ class AgentB:
         return log_msg
 
 # ============================================
-# 4. MOTOR DE INFERÊNCIA PARA ABORDAGEM B
+# 5. MOTOR DE INFERÊNCIA PARA GRUPOS ML
 # ============================================
 
 class InferenceEngineB:
@@ -422,7 +564,7 @@ class InferenceEngineB:
         return best_action
 
 # ============================================
-# 5. SIMULAÇÃO DA ABORDAGEM B
+# 6. SIMULAÇÃO DA ABORDAGEM B
 # ============================================
 
 class ApproachBSimulation:
@@ -559,168 +701,29 @@ class ApproachBSimulation:
             print(log)
 
 # ============================================
-# 6. BASELINE: BUSCA EM LARGURA (BFS) COLABORATIVO
+# 7. BASELINE B: N AGENTES BFS COLABORATIVOS
 # ============================================
 
-class AgentBFS:
-    """Agente BFS que prioriza exploração local"""
-    def __init__(self, agent_id, start_pos=(0, 0)):
-        self.id = agent_id
-        self.position = start_pos
-        self.alive = True
-        self.steps_taken = 0
-        self.treasures_collected = 0
-        self.bombs_defused = 0
-        
-        # Usar lista ordenada por distância em vez de fila pura
-        self.exploration_frontier = []  # Lista de (prioridade, posição)
-        self.personal_visited = set([start_pos])
-        
-        # Direção preferencial
-        self.preferred_direction = agent_id % 4
-        
-    def choose_action_bfs(self, shared_memory, env):
-        """BFS modificado: prioriza células PRÓXIMAS à posição atual"""
-        if not self.alive:
-            return None
-        
-        # 1. PRIMEIRO: Tentar vizinhos IMEDIATOS não explorados
-        x, y = self.position
-        neighbors = env.get_neighbors(x, y)
-        
-        # Filtrar vizinhos não explorados
-        unexplored_neighbors = [
-            n for n in neighbors 
-            if n not in shared_memory.explored
-        ]
-        
-        if unexplored_neighbors:
-            # Ordenar por direção preferencial
-            sorted_neighbors = self._sort_by_preference(unexplored_neighbors, self.position)
-            return sorted_neighbors[0]
-        
-        # 2. SEGUNDO: Procurar células próximas não exploradas (raio de busca)
-        nearby = self._find_nearby_unexplored(shared_memory, env, radius=3)
-        if nearby:
-            return nearby[0]  # Já vem ordenado por distância
-        
-        # 3. ÚLTIMO RECURSO: BFS tradicional mas com limite de distância
-        best_candidate = None
-        min_distance = float('inf')
-        
-        # Procurar em toda a fila, mas escolher a MAIS PRÓXIMA
-        for candidate in list(self.exploration_frontier):
-            if candidate not in shared_memory.explored:
-                distance = abs(candidate[0] - x) + abs(candidate[1] - y)  # Distância Manhattan
-                if distance < min_distance:
-                    min_distance = distance
-                    best_candidate = candidate
-        
-        if best_candidate and min_distance <= 5:  # Só aceita se não estiver muito longe
-            return best_candidate
-        
-        # Expandir fronteira se necessário
-        self._expand_frontier(env, shared_memory)
-        
-        return None
-    
-    def _find_nearby_unexplored(self, shared_memory, env, radius=3):
-        """Encontra células não exploradas próximas (BFS limitado)"""
-        x, y = self.position
-        candidates = []
-        
-        # Buscar em área limitada ao redor da posição atual
-        for dx in range(-radius, radius + 1):
-            for dy in range(-radius, radius + 1):
-                nx, ny = x + dx, y + dy
-                
-                # Verificar se está no grid
-                if 0 <= nx < env.size and 0 <= ny < env.size:
-                    pos = (nx, ny)
-                    
-                    # Se não foi explorada, adicionar como candidata
-                    if pos not in shared_memory.explored:
-                        distance = abs(dx) + abs(dy)
-                        candidates.append((distance, pos))
-        
-        # Ordenar por distância (mais próximo primeiro)
-        candidates.sort(key=lambda x: x[0])
-        
-        return [pos for _, pos in candidates]
-    
-    def _expand_frontier(self, env, shared_memory):
-        """Expande fronteira de exploração"""
-        x, y = self.position
-        neighbors = env.get_neighbors(x, y)
-        
-        for neighbor in neighbors:
-            if neighbor not in self.personal_visited:
-                self.personal_visited.add(neighbor)
-                if neighbor not in self.exploration_frontier:
-                    self.exploration_frontier.append(neighbor)
-    
-    def _sort_by_preference(self, neighbors, current_pos):
-        """Ordena vizinhos por direção preferencial"""
-        def priority(neighbor):
-            nx, ny = neighbor
-            cx, cy = current_pos
-            dx, dy = nx - cx, ny - cy
-            
-            if dx == -1: direction = 0
-            elif dx == 1: direction = 1
-            elif dy == 1: direction = 2
-            else: direction = 3
-            
-            if direction == self.preferred_direction:
-                return 0
-            return abs(direction - self.preferred_direction) + random.random() * 0.1
-        
-        return sorted(neighbors, key=priority)
-    
-    def choose_action(self, shared_memory, env):
-        """Alias para compatibilidade"""
-        return self.choose_action_bfs(shared_memory, env)
-    
-    def train_models(self, shared_memory=None, env=None):
-        """Método vazio - compatibilidade com GUI"""
-        pass
-    
-    def move_to(self, new_position, shared_memory, env):
-        """Move agente para nova posição"""
-        if not self.alive or new_position is None:
-            return "Agente inativo"
-        
-        old_pos = self.position
-        self.position = new_position
-        self.steps_taken += 1
-        
-        x, y = new_position
-        cell_content = env.get_cell(x, y)
-        log_msg = shared_memory.update_explored(new_position, cell_content, self.id, env)
-        
-        # Adicionar vizinhos à fronteira
-        neighbors = env.get_neighbors(x, y)
-        for neighbor in neighbors:
-            if neighbor not in self.personal_visited:
-                self.personal_visited.add(neighbor)
-                if neighbor not in self.exploration_frontier:
-                    self.exploration_frontier.append(neighbor)
-        
-        # Consequências
-        if cell_content == 'B':
-            if self.bombs_defused > 0:
-                self.bombs_defused -= 1
-                log_msg += " | BOMBA DESATIVADA!"
-                shared_memory.cell_knowledge[new_position]['safe'] = True
-            else:
-                self.alive = False
-                log_msg += " | AGENTE DESTRUÍDO"
-        
-        return log_msg
-
-
 class BaselineB_BFS:
-    """Baseline B: Múltiplos agentes usando BFS colaborativo"""
+    """
+    Baseline B: N agentes BFS colaborativos
+    
+    REGRAS CRÍTICAS:
+    ✅ N agentes permitidos
+    ✅ Todos executam o MESMO algoritmo (BFS puro)
+    ✅ Colaboração APENAS via memória compartilhada
+    ✅ SEM aprendizagem
+    ✅ SEM motor de inferência
+    ✅ SEM pesos
+    ✅ SEM decisão inteligente
+    
+    Citação para o relatório:
+    "Nas baselines, o número de agentes pode variar conforme a configuração 
+    da simulação; no entanto, todos os agentes executam o mesmo algoritmo 
+    clássico de forma idêntica, sem aprendizagem ou motor de inferência, 
+    servindo apenas para explorar o paralelismo e não para introduzir 
+    inteligência adicional."
+    """
     def __init__(self, num_agents=4, bomb_ratio=0.3, max_steps=500):
         self.env = EnvironmentB(bomb_ratio=bomb_ratio)
         self.shared_memory = SharedMemoryB()
@@ -751,14 +754,26 @@ class BaselineB_BFS:
         self.setup_agents()
     
     def setup_agents(self):
-        """Criar múltiplos agentes BFS"""
-        # Todos começam em (0,0) - posição segura garantida
+        """
+        Criar N agentes BFS
+        TODOS executam o MESMO algoritmo
+        Diferença: apenas ID e direção preferencial (para dividir espaço)
+        """
+        # Marcar (0,0) como explorada
+        initial_pos = (0, 0)
+        cell_content = self.env.get_cell(*initial_pos)
+        self.shared_memory.explored.add(initial_pos)
+        self.shared_memory.cell_knowledge[initial_pos]['explored'] = True
+        self.shared_memory.cell_knowledge[initial_pos]['type'] = cell_content
+        self.shared_memory.cell_knowledge[initial_pos]['safe'] = True
+        
+        # Criar N agentes BFS idênticos
         for i in range(self.num_agents):
-            agent = AgentBFS(agent_id=i, start_pos=(0, 0))
+            agent = AgentBFS(agent_id=i, start_pos=initial_pos)
             self.agents.append(agent)
     
     def run(self):
-        """Executa simulação com múltiplos agentes BFS"""
+        """Executa simulação com N agentes BFS"""
         start_time = time.time()
         step = 0
         
@@ -776,7 +791,7 @@ class BaselineB_BFS:
                     continue
                 
                 # Escolher próxima célula usando BFS
-                next_pos = agent.choose_action_bfs(self.shared_memory, self.env)
+                next_pos = agent.choose_action(self.shared_memory, self.env)
                 
                 if next_pos:
                     log_msg = agent.move_to(next_pos, self.shared_memory, self.env)
@@ -812,7 +827,7 @@ class BaselineB_BFS:
 
 
 # ============================================
-# 7. FUNÇÕES DE ANÁLISE E COMPARAÇÃO
+# 8. FUNÇÕES DE ANÁLISE E COMPARAÇÃO
 # ============================================
 
 def run_multiple_simulations_b(num_simulations=5, num_agents=4, homogeneous=True):
@@ -866,10 +881,10 @@ def compare_approaches_b():
             num_simulations=5, num_agents=num_agents, homogeneous=False
         )
         
-        # Baseline BFS
+        # Baseline BFS com N agentes
         bfs_results = []
         for _ in range(5):
-            bfs = BaselineB_BFS()
+            bfs = BaselineB_BFS(num_agents=num_agents)
             bfs_metrics = bfs.run()
             bfs_results.append(bfs_metrics)
         
@@ -891,12 +906,12 @@ def compare_approaches_b():
         
         print(f"  Homogêneo: {homo_results['success_rate']:.0%} sucesso")
         print(f"  Heterogêneo: {hetero_results['success_rate']:.0%} sucesso")
-        print(f"  BFS: {bfs_success_rate:.0%} sucesso")
+        print(f"  BFS ({num_agents} agentes): {bfs_success_rate:.0%} sucesso")
     
     return results
 
 # ============================================
-# 8. EXECUÇÃO PRINCIPAL
+# 9. EXECUÇÃO PRINCIPAL
 # ============================================
 
 if __name__ == "__main__":
@@ -909,11 +924,20 @@ if __name__ == "__main__":
     metrics = sim.run_simulation(verbose=True)
     sim.print_logs()
     
+    # Teste Baseline BFS com 4 agentes
+    print("\n\n2. Teste Baseline BFS - 4 agentes:")
+    baseline = BaselineB_BFS(num_agents=4)
+    baseline_metrics = baseline.run()
+    print(f"Baseline BFS (4 agentes): {'Sucesso' if baseline_metrics['success'] else 'Falha'}")
+    print(f"Explorado: {baseline_metrics['explored_percentage']:.1f}%")
+    print(f"Passos: {baseline_metrics['steps_taken']}")
+    print(f"Tempo: {baseline_metrics['execution_time']:.2f}s")
+    
     # Comparação completa
-    print("\n\n2. Comparação completa...")
+    print("\n\n3. Comparação completa...")
     results = compare_approaches_b()
     
-    print("\n\n3. ANÁLISE DOS RESULTADOS:")
+    print("\n\n4. ANÁLISE DOS RESULTADOS:")
     print("-"*50)
     
     best_homo = max(results, key=lambda x: x['homogeneous']['success_rate'])
@@ -924,3 +948,8 @@ if __name__ == "__main__":
     
     print(f"\nMelhor configuração Heterogênea: {best_hetero['num_agents']} agentes")
     print(f"  Taxa de sucesso: {best_hetero['heterogeneous']['success_rate']:.0%}")
+    
+    print(f"\nBaseline BFS:")
+    print(f"  Executa BFS puro com N agentes colaborativos")
+    print(f"  MESMA política para todos os agentes")
+    print(f"  SEM aprendizagem, SEM inferência, SEM pesos")

@@ -801,6 +801,600 @@
         "safety_coverage_score": 0.0,
         "redundancy_rate": 0.0
       }
+    },
+    {
+      "timestamp": "2026-02-04T20:33:12.784810",
+      "approach": "B",
+      "group_type": "homogeneous",
+      "parameters": {
+        "num_agents": 4,
+        "bomb_ratio": 0.2,
+        "treasure_count": 10,
+        "max_steps": 150,
+        "homogeneous": true
+      },
+      "metrics": {
+        "explored_percentage": 27.160493827160494,
+        "safe_exploration_rate": 27.160493827160494,
+        "agents_alive": 0,
+        "survival_rate": 0.0,
+        "bombs_triggered": 4,
+        "cells_per_second": 22000.0,
+        "cells_per_step": 22.0,
+        "bombs_identified": 4,
+        "safe_decisions": 22,
+        "success": false,
+        "success_rate": 0.0,
+        "safety_coverage_score": 0.0,
+        "redundancy_rate": 0.0
+      }
+    },
+    {
+      "timestamp": "2026-02-04T20:33:20.276964",
+      "approach": "B",
+      "group_type": "homogeneous",
+      "parameters": {
+        "num_agents": 4,
+        "bomb_ratio": 0.2,
+        "treasure_count": 10,
+        "max_steps": 150,
+        "homogeneous": true
+      },
+      "metrics": {
+        "explored_percentage": 22.22222222222222,
+        "safe_exploration_rate": 22.22222222222222,
+        "agents_alive": 0,
+        "survival_rate": 0.0,
+        "bombs_triggered": 4,
+        "cells_per_second": 18000.0,
+        "cells_per_step": 18.0,
+        "bombs_identified": 4,
+        "safe_decisions": 18,
+        "success": false,
+        "success_rate": 0.0,
+        "safety_coverage_score": 0.0,
+        "redundancy_rate": 0.0
+      }
+    },
+    {
+      "timestamp": "2026-02-04T20:33:25.911228",
+      "approach": "B",
+      "group_type": "homogeneous",
+      "parameters": {
+        "num_agents": 4,
+        "bomb_ratio": 0.2,
+        "treasure_count": 10,
+        "max_steps": 150,
+        "homogeneous": true
+      },
+      "metrics": {
+        "explored_percentage": 19.753086419753085,
+        "safe_exploration_rate": 19.753086419753085,
+        "agents_alive": 0,
+        "survival_rate": 0.0,
+        "bombs_triggered": 4,
+        "cells_per_second": 16000.0,
+        "cells_per_step": 16.0,
+        "bombs_identified": 4,
+        "safe_decisions": 16,
+        "success": false,
+        "success_rate": 0.0,
+        "safety_coverage_score": 0.0,
+        "redundancy_rate": 0.0
+      }
+    },
+    {
+      "timestamp": "2026-02-04T20:33:39.766719",
+      "approach": "B",
+      "group_type": "homogeneous",
+      "parameters": {
+        "num_agents": 10,
+        "bomb_ratio": 0.2,
+        "treasure_count": 10,
+        "max_steps": 150,
+        "homogeneous": true
+      },
+      "metrics": {
+        "explored_percentage": 45.67901234567901,
+        "safe_exploration_rate": 45.67901234567901,
+        "agents_alive": 0,
+        "survival_rate": 0.0,
+        "bombs_triggered": 10,
+        "cells_per_second": 37000.0,
+        "cells_per_step": 37.0,
+        "bombs_identified": 10,
+        "safe_decisions": 37,
+        "success": false,
+        "success_rate": 0.0,
+        "safety_coverage_score": 0.0,
+        "redundancy_rate": 0.0
+      }
+    },
+    {
+      "timestamp": "2026-02-04T20:34:01.090235",
+      "approach": "B",
+      "group_type": "homogeneous",
+      "parameters": {
+        "num_agents": 10,
+        "bomb_ratio": 0.2,
+        "treasure_count": 10,
+        "max_steps": 150,
+        "homogeneous": true
+      },
+      "metrics": {
+        "explored_percentage": 55.55555555555556,
+        "safe_exploration_rate": 55.55555555555556,
+        "agents_alive": 0,
+        "survival_rate": 0.0,
+        "bombs_triggered": 10,
+        "cells_per_second": 45000.0,
+        "cells_per_step": 45.0,
+        "bombs_identified": 10,
+        "safe_decisions": 45,
+        "success": false,
+        "success_rate": 0.0,
+        "safety_coverage_score": 0.0,
+        "redundancy_rate": 0.0
+      }
+    },
+    {
+      "timestamp": "2026-02-04T20:34:08.374140",
+      "approach": "B",
+      "group_type": "homogeneous",
+      "parameters": {
+        "num_agents": 10,
+        "bomb_ratio": 0.2,
+        "treasure_count": 10,
+        "max_steps": 150,
+        "homogeneous": true
+      },
+      "metrics": {
+        "explored_percentage": 1.2345679012345678,
+        "safe_exploration_rate": 1.2345679012345678,
+        "agents_alive": 0,
+        "survival_rate": 0.0,
+        "bombs_triggered": 10,
+        "cells_per_second": 1000.0,
+        "cells_per_step": 1.0,
+        "bombs_identified": 2,
+        "safe_decisions": 1,
+        "success": false,
+        "success_rate": 0.0,
+        "safety_coverage_score": 0.0,
+        "redundancy_rate": 0.0
+      }
+    },
+    {
+      "timestamp": "2026-02-04T20:34:19.134507",
+      "approach": "B",
+      "group_type": "homogeneous",
+      "parameters": {
+        "num_agents": 10,
+        "bomb_ratio": 0.2,
+        "treasure_count": 10,
+        "max_steps": 150,
+        "homogeneous": true
+      },
+      "metrics": {
+        "explored_percentage": 46.913580246913575,
+        "safe_exploration_rate": 46.91358024691358,
+        "agents_alive": 0,
+        "survival_rate": 0.0,
+        "bombs_triggered": 10,
+        "cells_per_second": 38000.0,
+        "cells_per_step": 38.0,
+        "bombs_identified": 10,
+        "safe_decisions": 38,
+        "success": false,
+        "success_rate": 0.0,
+        "safety_coverage_score": 0.0,
+        "redundancy_rate": 0.0
+      }
+    },
+    {
+      "timestamp": "2026-02-04T20:34:30.476821",
+      "approach": "B",
+      "group_type": "baseline",
+      "parameters": {
+        "num_agents": 10,
+        "bomb_ratio": 0.2,
+        "treasure_count": 10,
+        "max_steps": 150,
+        "homogeneous": false
+      },
+      "metrics": {
+        "explored_percentage": 37.03703703703704,
+        "safe_exploration_rate": 37.03703703703704,
+        "agents_alive": 0,
+        "survival_rate": 0.0,
+        "bombs_triggered": 10,
+        "cells_per_second": 30000.0,
+        "cells_per_step": 30.0,
+        "bombs_identified": 10,
+        "safe_decisions": 30,
+        "success": false,
+        "success_rate": 0.0,
+        "safety_coverage_score": 0.0,
+        "redundancy_rate": 0.0
+      }
+    },
+    {
+      "timestamp": "2026-02-04T20:34:38.467956",
+      "approach": "B",
+      "group_type": "baseline",
+      "parameters": {
+        "num_agents": 10,
+        "bomb_ratio": 0.2,
+        "treasure_count": 10,
+        "max_steps": 150,
+        "homogeneous": false
+      },
+      "metrics": {
+        "explored_percentage": 55.55555555555556,
+        "safe_exploration_rate": 55.55555555555556,
+        "agents_alive": 0,
+        "survival_rate": 0.0,
+        "bombs_triggered": 10,
+        "cells_per_second": 45000.0,
+        "cells_per_step": 45.0,
+        "bombs_identified": 10,
+        "safe_decisions": 45,
+        "success": false,
+        "success_rate": 0.0,
+        "safety_coverage_score": 0.0,
+        "redundancy_rate": 0.0
+      }
+    },
+    {
+      "timestamp": "2026-02-04T20:34:45.586976",
+      "approach": "B",
+      "group_type": "baseline",
+      "parameters": {
+        "num_agents": 10,
+        "bomb_ratio": 0.2,
+        "treasure_count": 10,
+        "max_steps": 150,
+        "homogeneous": false
+      },
+      "metrics": {
+        "explored_percentage": 41.9753086419753,
+        "safe_exploration_rate": 41.97530864197531,
+        "agents_alive": 0,
+        "survival_rate": 0.0,
+        "bombs_triggered": 10,
+        "cells_per_second": 34000.0,
+        "cells_per_step": 34.0,
+        "bombs_identified": 10,
+        "safe_decisions": 34,
+        "success": false,
+        "success_rate": 0.0,
+        "safety_coverage_score": 0.0,
+        "redundancy_rate": 0.0
+      }
+    },
+    {
+      "timestamp": "2026-02-04T20:34:52.376877",
+      "approach": "B",
+      "group_type": "baseline",
+      "parameters": {
+        "num_agents": 10,
+        "bomb_ratio": 0.2,
+        "treasure_count": 10,
+        "max_steps": 150,
+        "homogeneous": false
+      },
+      "metrics": {
+        "explored_percentage": 38.2716049382716,
+        "safe_exploration_rate": 38.27160493827161,
+        "agents_alive": 0,
+        "survival_rate": 0.0,
+        "bombs_triggered": 10,
+        "cells_per_second": 31000.0,
+        "cells_per_step": 31.0,
+        "bombs_identified": 10,
+        "safe_decisions": 31,
+        "success": false,
+        "success_rate": 0.0,
+        "safety_coverage_score": 0.0,
+        "redundancy_rate": 0.0
+      }
+    },
+    {
+      "timestamp": "2026-02-04T20:35:05.730892",
+      "approach": "B",
+      "group_type": "baseline",
+      "parameters": {
+        "num_agents": 10,
+        "bomb_ratio": 0.2,
+        "treasure_count": 10,
+        "max_steps": 150,
+        "homogeneous": false
+      },
+      "metrics": {
+        "explored_percentage": 43.20987654320987,
+        "safe_exploration_rate": 43.20987654320987,
+        "agents_alive": 0,
+        "survival_rate": 0.0,
+        "bombs_triggered": 10,
+        "cells_per_second": 35000.0,
+        "cells_per_step": 35.0,
+        "bombs_identified": 10,
+        "safe_decisions": 35,
+        "success": false,
+        "success_rate": 0.0,
+        "safety_coverage_score": 0.0,
+        "redundancy_rate": 0.0
+      }
+    },
+    {
+      "timestamp": "2026-02-04T20:35:11.746022",
+      "approach": "B",
+      "group_type": "baseline",
+      "parameters": {
+        "num_agents": 10,
+        "bomb_ratio": 0.2,
+        "treasure_count": 10,
+        "max_steps": 150,
+        "homogeneous": false
+      },
+      "metrics": {
+        "explored_percentage": 54.32098765432099,
+        "safe_exploration_rate": 54.32098765432099,
+        "agents_alive": 0,
+        "survival_rate": 0.0,
+        "bombs_triggered": 10,
+        "cells_per_second": 44000.0,
+        "cells_per_step": 44.0,
+        "bombs_identified": 10,
+        "safe_decisions": 44,
+        "success": false,
+        "success_rate": 0.0,
+        "safety_coverage_score": 0.0,
+        "redundancy_rate": 0.0
+      }
+    },
+    {
+      "timestamp": "2026-02-04T20:35:19.533243",
+      "approach": "B",
+      "group_type": "baseline",
+      "parameters": {
+        "num_agents": 10,
+        "bomb_ratio": 0.2,
+        "treasure_count": 10,
+        "max_steps": 150,
+        "homogeneous": false
+      },
+      "metrics": {
+        "explored_percentage": 53.086419753086425,
+        "safe_exploration_rate": 53.08641975308642,
+        "agents_alive": 0,
+        "survival_rate": 0.0,
+        "bombs_triggered": 10,
+        "cells_per_second": 43000.0,
+        "cells_per_step": 43.0,
+        "bombs_identified": 10,
+        "safe_decisions": 43,
+        "success": false,
+        "success_rate": 0.0,
+        "safety_coverage_score": 0.0,
+        "redundancy_rate": 0.0
+      }
+    },
+    {
+      "timestamp": "2026-02-04T20:40:27.746510",
+      "approach": "B",
+      "group_type": "heterogeneous",
+      "parameters": {
+        "num_agents": 10,
+        "bomb_ratio": 0.2,
+        "treasure_count": 10,
+        "max_steps": 150,
+        "homogeneous": false
+      },
+      "metrics": {
+        "explored_percentage": 30.864197530864196,
+        "safe_exploration_rate": 30.864197530864196,
+        "agents_alive": 0,
+        "survival_rate": 0.0,
+        "bombs_triggered": 10,
+        "cells_per_second": 25000.0,
+        "cells_per_step": 25.0,
+        "bombs_identified": 10,
+        "safe_decisions": 25,
+        "success": false,
+        "success_rate": 0.0,
+        "safety_coverage_score": 0.0,
+        "redundancy_rate": 0.0
+      }
+    },
+    {
+      "timestamp": "2026-02-04T20:40:42.225415",
+      "approach": "B",
+      "group_type": "heterogeneous",
+      "parameters": {
+        "num_agents": 10,
+        "bomb_ratio": 0.2,
+        "treasure_count": 10,
+        "max_steps": 150,
+        "homogeneous": false
+      },
+      "metrics": {
+        "explored_percentage": 53.086419753086425,
+        "safe_exploration_rate": 53.08641975308642,
+        "agents_alive": 0,
+        "survival_rate": 0.0,
+        "bombs_triggered": 10,
+        "cells_per_second": 43000.0,
+        "cells_per_step": 43.0,
+        "bombs_identified": 10,
+        "safe_decisions": 43,
+        "success": false,
+        "success_rate": 0.0,
+        "safety_coverage_score": 0.0,
+        "redundancy_rate": 0.0
+      }
+    },
+    {
+      "timestamp": "2026-02-04T20:40:53.123187",
+      "approach": "B",
+      "group_type": "baseline",
+      "parameters": {
+        "num_agents": 10,
+        "bomb_ratio": 0.2,
+        "treasure_count": 10,
+        "max_steps": 150,
+        "homogeneous": false
+      },
+      "metrics": {
+        "explored_percentage": 61.72839506172839,
+        "safe_exploration_rate": 61.72839506172839,
+        "agents_alive": 0,
+        "survival_rate": 0.0,
+        "bombs_triggered": 10,
+        "cells_per_second": 50000.0,
+        "cells_per_step": 50.0,
+        "bombs_identified": 10,
+        "safe_decisions": 50,
+        "success": false,
+        "success_rate": 0.0,
+        "safety_coverage_score": 0.0,
+        "redundancy_rate": 0.0
+      }
+    },
+    {
+      "timestamp": "2026-02-04T20:41:07.701480",
+      "approach": "B",
+      "group_type": "homogeneous",
+      "parameters": {
+        "num_agents": 10,
+        "bomb_ratio": 0.2,
+        "treasure_count": 10,
+        "max_steps": 150,
+        "homogeneous": true
+      },
+      "metrics": {
+        "explored_percentage": 48.148148148148145,
+        "safe_exploration_rate": 48.148148148148145,
+        "agents_alive": 0,
+        "survival_rate": 0.0,
+        "bombs_triggered": 10,
+        "cells_per_second": 39000.0,
+        "cells_per_step": 39.0,
+        "bombs_identified": 10,
+        "safe_decisions": 39,
+        "success": false,
+        "success_rate": 0.0,
+        "safety_coverage_score": 0.0,
+        "redundancy_rate": 0.0
+      }
+    },
+    {
+      "timestamp": "2026-02-04T21:28:49.681917",
+      "approach": "B",
+      "group_type": "homogeneous",
+      "parameters": {
+        "num_agents": 4,
+        "bomb_ratio": 0.2,
+        "treasure_count": 10,
+        "max_steps": 150,
+        "homogeneous": true
+      },
+      "metrics": {
+        "explored_percentage": 14.814814814814813,
+        "safe_exploration_rate": 14.814814814814815,
+        "agents_alive": 0,
+        "survival_rate": 0.0,
+        "bombs_triggered": 4,
+        "cells_per_second": 12000.0,
+        "cells_per_step": 12.0,
+        "bombs_identified": 4,
+        "safe_decisions": 12,
+        "success": false,
+        "success_rate": 0.0,
+        "safety_coverage_score": 0.0,
+        "redundancy_rate": 0.0
+      }
+    },
+    {
+      "timestamp": "2026-02-04T21:28:59.263702",
+      "approach": "B",
+      "group_type": "heterogeneous",
+      "parameters": {
+        "num_agents": 4,
+        "bomb_ratio": 0.2,
+        "treasure_count": 10,
+        "max_steps": 150,
+        "homogeneous": false
+      },
+      "metrics": {
+        "explored_percentage": 20.98765432098765,
+        "safe_exploration_rate": 20.987654320987655,
+        "agents_alive": 0,
+        "survival_rate": 0.0,
+        "bombs_triggered": 4,
+        "cells_per_second": 17000.0,
+        "cells_per_step": 17.0,
+        "bombs_identified": 4,
+        "safe_decisions": 17,
+        "success": false,
+        "success_rate": 0.0,
+        "safety_coverage_score": 0.0,
+        "redundancy_rate": 0.0
+      }
+    },
+    {
+      "timestamp": "2026-02-04T21:29:03.563758",
+      "approach": "B",
+      "group_type": "baseline",
+      "parameters": {
+        "num_agents": 4,
+        "bomb_ratio": 0.2,
+        "treasure_count": 10,
+        "max_steps": 150,
+        "homogeneous": false
+      },
+      "metrics": {
+        "explored_percentage": 12.345679012345679,
+        "safe_exploration_rate": 12.345679012345679,
+        "agents_alive": 0,
+        "survival_rate": 0.0,
+        "bombs_triggered": 4,
+        "cells_per_second": 10000.0,
+        "cells_per_step": 10.0,
+        "bombs_identified": 4,
+        "safe_decisions": 10,
+        "success": false,
+        "success_rate": 0.0,
+        "safety_coverage_score": 0.0,
+        "redundancy_rate": 0.0
+      }
+    },
+    {
+      "timestamp": "2026-02-04T21:29:12.318284",
+      "approach": "B",
+      "group_type": "baseline",
+      "parameters": {
+        "num_agents": 4,
+        "bomb_ratio": 0.2,
+        "treasure_count": 10,
+        "max_steps": 150,
+        "homogeneous": false
+      },
+      "metrics": {
+        "explored_percentage": 34.5679012345679,
+        "safe_exploration_rate": 34.5679012345679,
+        "agents_alive": 0,
+        "survival_rate": 0.0,
+        "bombs_triggered": 4,
+        "cells_per_second": 28000.0,
+        "cells_per_step": 28.0,
+        "bombs_identified": 4,
+        "safe_decisions": 28,
+        "success": false,
+        "success_rate": 0.0,
+        "safety_coverage_score": 0.0,
+        "redundancy_rate": 0.0
+      }
     }
   ],
   "C": [
@@ -1113,6 +1707,70 @@
         "actual_distance": 1.0,
         "path_deviation": -14.0,
         "path_efficiency": 1500.0,
+        "bombs_triggered": 10,
+        "risk_ratio": 1.0,
+        "treasures_collected": 0,
+        "time_to_flag": 0.001,
+        "steps_per_second": 1000.0,
+        "flag_found": false,
+        "success": false,
+        "success_rate": 0.0,
+        "overall_score": 999999.0
+      }
+    },
+    {
+      "timestamp": "2026-02-04T21:09:20.424408",
+      "approach": "C",
+      "group_type": "heterogeneous",
+      "parameters": {
+        "num_agents": 10,
+        "bomb_ratio": 0.2,
+        "treasure_count": 10,
+        "max_steps": 150,
+        "homogeneous": false
+      },
+      "metrics": {
+        "avg_steps_to_flag": 1.0,
+        "min_steps_to_flag": 1.0,
+        "max_steps_to_flag": 1.0,
+        "min_path_cost": 0.0,
+        "avg_path_cost": 0.0,
+        "optimal_distance": 1.0,
+        "actual_distance": 1.0,
+        "path_deviation": 0.0,
+        "path_efficiency": 100.0,
+        "bombs_triggered": 10,
+        "risk_ratio": 1.0,
+        "treasures_collected": 0,
+        "time_to_flag": 0.001,
+        "steps_per_second": 1000.0,
+        "flag_found": false,
+        "success": false,
+        "success_rate": 0.0,
+        "overall_score": 999999.0
+      }
+    },
+    {
+      "timestamp": "2026-02-04T21:09:42.853404",
+      "approach": "C",
+      "group_type": "heterogeneous",
+      "parameters": {
+        "num_agents": 10,
+        "bomb_ratio": 0.2,
+        "treasure_count": 10,
+        "max_steps": 150,
+        "homogeneous": false
+      },
+      "metrics": {
+        "avg_steps_to_flag": 20.3,
+        "min_steps_to_flag": 2.0,
+        "max_steps_to_flag": 33.0,
+        "min_path_cost": 0.0,
+        "avg_path_cost": 0.0,
+        "optimal_distance": 15.0,
+        "actual_distance": 2.0,
+        "path_deviation": -13.0,
+        "path_efficiency": 750.0,
         "bombs_triggered": 10,
         "risk_ratio": 1.0,
         "treasures_collected": 0,
