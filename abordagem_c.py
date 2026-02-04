@@ -132,29 +132,37 @@ class SharedMemoryC:
         
         # Atualizar conhecimento da célula
         self.cell_knowledge[position]['explored'] = True
-        self.cell_knowledge[position]['type'] = content
         
         log_msg = f"Agente {agent_id}: {content} em {position}"
         
         if content == 'T':
+            # Primeiro agente a encontrar o tesouro
             if position not in self.treasures_collected:
                 self.treasures_found.add(position)
                 self.treasures_collected.add(position)
-                env.reset_treasure(position)
+                # Marcar tipo como tesouro ANTES de resetar
+                self.cell_knowledge[position]['type'] = 'T'
+                env.reset_treasure(position)  # Transforma tesouro em 'L' no ambiente
                 log_msg += " (TESOURO COLETADO!)"
             else:
-                log_msg += " (TESOURO JÁ COLETADO)"
+                # Tesouro já foi coletado por outro agente, agora é célula livre
+                self.cell_knowledge[position]['type'] = 'L'
+                log_msg += " (LIVRE - Tesouro já coletado)"
         elif content == 'B':
+            self.cell_knowledge[position]['type'] = content
             self.bombs_found.add(position)
             self.cell_knowledge[position]['safe'] = False
             self.cell_knowledge[position]['risk'] = 1.0
             self.cell_knowledge[position]['cost'] = float('inf')
             log_msg += " (BOMBA)"
         elif content == 'F':
+            self.cell_knowledge[position]['type'] = content
             self.flag_found = True
             self.flag_position = position
             log_msg += " (BANDEIRA ENCONTRADA! OBJETIVO ALCANÇADO!)"
         else:
+            # Célula livre
+            self.cell_knowledge[position]['type'] = content
             self.cell_knowledge[position]['safe'] = True
             
         # Atualizar custos das células vizinhas
@@ -407,9 +415,16 @@ class AgentC:
         
         # Consequências da ação
         if cell_content == 'T':
-            self.treasures_collected += 1
-            self.bombs_defused += 1
-            log_msg += f" | Tesouros: {self.treasures_collected}"
+            # Só incrementa se realmente coletou (primeiro a chegar)
+            if new_position in (shared_memory.treasures_collected if shared_memory else memory.treasures_collected):
+                self.treasures_collected += 1
+                self.bombs_defused += 1
+                log_msg += f" | Tesouros: {self.treasures_collected}"
+        elif cell_content == 'L':
+            # Verificar se era um tesouro que já foi coletado
+            if new_position in (shared_memory.treasures_collected if shared_memory else memory.treasures_collected):
+                # Apenas para informação, não coleta novamente
+                pass
         elif cell_content == 'B':
             if self.bombs_defused > 0:
                 self.bombs_defused -= 1
