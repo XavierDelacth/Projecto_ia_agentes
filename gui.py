@@ -438,28 +438,31 @@ class IAProjectGUI:
             # Abordagem A/C: marcar tesouros encontrados
             for (x, y) in simulation.shared_memory.treasures_found:
                 visual_grid[x, y] = 3  # Tesouro
-            
-            # Marcar bombas encontradas (SOMENTE as que foram EXPLORADAS)
-            # Isso garante que bombas só aparecem quando agentes as acionam
+            # Marcar bombas encontradas
             for (x, y) in simulation.shared_memory.bombs_found:
-                # Verificar se a célula foi de fato explorada (agente passou por ela)
-                if (x, y) in simulation.shared_memory.explored:
-                    visual_grid[x, y] = 1  # Bomba
-            
+                visual_grid[x, y] = 1  # Bomba
+            # Marcar células livres exploradas
             for (x, y) in simulation.shared_memory.explored:
                 if visual_grid[x, y] == 0:  # Não é tesouro ou bomba
                     visual_grid[x, y] = 2  # Livre explorada
-            # ABORDAGEM C: Marcar bandeira
-            if is_approach_c and simulation.shared_memory.flag_position:
-                fx, fy = simulation.shared_memory.flag_position
-                visual_grid[fx, fy] = 5  # Bandeira (roxo)
+            # ABORDAGEM C: Marcar bandeira SEMPRE (usando true_flag_position para UI)
+            if is_approach_c:
+                # A bandeira está SEMPRE visível na UI (roxo), mas desconhecida dos agentes
+                flag_pos = None
+                if hasattr(simulation.shared_memory, 'true_flag_position') and simulation.shared_memory.true_flag_position:
+                    flag_pos = simulation.shared_memory.true_flag_position
+                elif hasattr(simulation, 'env') and hasattr(simulation.env, 'flag_position') and simulation.env.flag_position:
+                    flag_pos = simulation.env.flag_position
+                
+                if flag_pos:
+                    fx, fy = flag_pos
+                    visual_grid[fx, fy] = 5  # Bandeira (roxo)
+            # Marcar posições dos agentes vivos
+            for agent in simulation.agents:
+                if agent.alive:
+                    x, y = agent.position
+                    visual_grid[x, y] = 4  # Agente
         
-        
-        # Marcar posições dos agentes vivos
-        for agent in simulation.agents:
-            if agent.alive:
-                x, y = agent.position
-                visual_grid[x, y] = 4  # Agente
         # Configurar mapa de cores (adicionar roxo para bandeira)
         cmap = plt.cm.colors.ListedColormap(['white', 'red', 'lightblue', 'gold', 'green', 'purple'])
         bounds = [0, 1, 2, 3, 4, 5, 6]
@@ -479,11 +482,17 @@ class IAProjectGUI:
                     self.ax.text(j, i, '?', ha='center', va='center', 
                                 fontsize=8, color='gray', alpha=0.5)
         
-        # Adicionar símbolo de bandeira conhecida (mas não alcançada)
-        if is_approach_c and simulation.shared_memory.flag_position:
-            fx, fy = simulation.shared_memory.flag_position
-            # Se bandeira não foi alcançada ainda, mostrar símbolo
-            if not simulation.shared_memory.flag_found:
+        # Adicionar símbolo de bandeira (SEMPRE visível, mas desconhecida dos agentes)
+        if is_approach_c:
+            flag_pos = None
+            if hasattr(simulation.shared_memory, 'true_flag_position') and simulation.shared_memory.true_flag_position:
+                flag_pos = simulation.shared_memory.true_flag_position
+            elif hasattr(simulation, 'env') and hasattr(simulation.env, 'flag_position') and simulation.env.flag_position:
+                flag_pos = simulation.env.flag_position
+            
+            if flag_pos:
+                fx, fy = flag_pos
+                # Mostrar emoji da bandeira SEMPRE (independente se foi encontrada)
                 self.ax.text(fy, fx, '🚩', ha='center', va='center', 
                             fontsize=16, color='purple', fontweight='bold')
         
