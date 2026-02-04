@@ -556,6 +556,16 @@ class ApproachCSimulation:
         
     def setup_agents(self):
         """Configura agentes"""
+        # Marcar posição inicial (0,0) como explorada ANTES de criar os agentes
+        initial_pos = (0, 0)
+        cell_content = self.env.get_cell(*initial_pos)
+        
+        # Adicionar à memória compartilhada
+        self.shared_memory.explored.add(initial_pos)
+        self.shared_memory.cell_knowledge[initial_pos]['explored'] = True
+        self.shared_memory.cell_knowledge[initial_pos]['type'] = cell_content
+        self.shared_memory.cell_knowledge[initial_pos]['safe'] = True
+        
         # Pesos base otimizados para busca
         base_weights = {
             'F': 100.0, 'T': 8.0, 'L': 2.0, 
