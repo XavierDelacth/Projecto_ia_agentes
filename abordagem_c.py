@@ -109,12 +109,13 @@ class SharedMemoryC:
         self.movement_costs = {}
         
         # Inicializar conhecimento
+        # ✅ FIX: Inicializar como INSEGURO até provar o contrário (conservador)
         for i in range(env_size):
             for j in range(env_size):
                 self.cell_knowledge[(i, j)] = {
                     'type': 'U',  # U = Unknown
                     'explored': False,
-                    'safe': True,
+                    'safe': False,  # ✅ Assume inseguro até explorar
                     'cost': 1.0,
                     'risk': 0.0
                 }
@@ -122,6 +123,13 @@ class SharedMemoryC:
         
         # Posição inicial (0,0) tem custo 0
         self.movement_costs[(0, 0)] = 0
+        
+        # ✅ FIX: Marcar (0,0) e vizinhas imediatas como seguras inicialmente
+        self.cell_knowledge[(0, 0)]['safe'] = True
+        for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+            nx, ny = 0 + dx, 0 + dy
+            if 0 <= nx < env_size and 0 <= ny < env_size:
+                self.cell_knowledge[(nx, ny)]['safe'] = True
     
     def update_explored(self, position, content, agent_id, env):
         """Atualiza memória com nova exploração"""
@@ -160,6 +168,13 @@ class SharedMemoryC:
         else:
             self.cell_knowledge[position]['type'] = content
             self.cell_knowledge[position]['safe'] = True
+            
+            # ✅ FIX: Marcar vizinhas não exploradas como seguras (expande zona segura)
+            neighbors = env.get_neighbors(x, y)
+            for neighbor in neighbors:
+                if not self.cell_knowledge[neighbor]['explored']:
+                    if neighbor not in self.bombs_found:
+                        self.cell_knowledge[neighbor]['safe'] = True
             
         # Atualizar custos das células vizinhas
         self.update_neighbor_costs(position, env)
@@ -673,7 +688,7 @@ class InferenceEngineC:
         }
         
         self.cost_weight = 0.5
-        self.risk_weight = 2.0
+        self.risk_weight = 1.0  # ✅ Reduzido de 2.0 para 1.0 (menos conservador)
         self.exploration_weight = 2.0
     
     def calculate_score(self, cell_type, position, shared_memory, agent):
@@ -698,12 +713,14 @@ class InferenceEngineC:
         base_score -= (cost * self.cost_weight)
         base_score -= (risk * self.risk_weight)
         
-        # Penalidade por estar perto de bomba
+        # Penalidade por estar perto de bomba (✅ REDUZIDAS para permitir exploração)
         x, y = position
         for bx, by in shared_memory.bombs_found:
             bomb_distance = abs(bx - x) + abs(by - y)
-            if bomb_distance == 1:
-                base_score -= 30.0
+            if bomb_distance == 1:  # Adjacente a bomba
+                base_score -= 10.0  # ✅ Reduzido de -30 para -10
+            elif bomb_distance == 2:  # 2 células de distância
+                base_score -= 3.0  # ✅ Nova penalidade moderada
         
         return base_score
     
@@ -767,6 +784,14 @@ class ApproachCSimulation:
         
     def setup_agents(self):
         """Configura agentes"""
+        # ✅ FIX CRÍTICO: Marcar posição inicial (0,0) como explorada ANTES de criar agentes
+        initial_pos = (0, 0)
+        cell_content = self.env.get_cell(*initial_pos)
+        self.shared_memory.explored.add(initial_pos)
+        self.shared_memory.cell_knowledge[initial_pos]['explored'] = True
+        self.shared_memory.cell_knowledge[initial_pos]['type'] = cell_content
+        self.shared_memory.cell_knowledge[initial_pos]['safe'] = True
+        
         base_weights = {
             'F': 100.0, 'T': 8.0, 'L': 2.0, 
             'B': -200.0, 'U': 3.0, 'E': -0.8
