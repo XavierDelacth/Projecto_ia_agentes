@@ -17,6 +17,10 @@ from abordagem_b import (
     ApproachBSimulation, BaselineB_BFS, EnvironmentB,
     compare_approaches_b
 )
+from abordagem_c import (
+    ApproachCSimulation, BaselineC_AStar, EnvironmentC,
+    compare_approaches_c
+)
 
 class IAProjectGUI:
     def __init__(self, root):
@@ -414,6 +418,8 @@ class IAProjectGUI:
         
         # Verificar se é abordagem B (sem tesouros)
         is_approach_b = hasattr(simulation, 'env') and isinstance(simulation.env, EnvironmentB)
+        # Verificar se é abordagem C (com bandeira)
+        is_approach_c = hasattr(simulation, 'env') and isinstance(simulation.env, EnvironmentC)
 
         if is_approach_b:
             # Marcar bombas encontradas
@@ -439,15 +445,19 @@ class IAProjectGUI:
             for (x, y) in simulation.shared_memory.explored:
                 if visual_grid[x, y] == 0:  # Não é tesouro ou bomba
                     visual_grid[x, y] = 2  # Livre explorada
+            # ABORDAGEM C: Marcar bandeira
+            if is_approach_c and simulation.shared_memory.flag_position:
+                fx, fy = simulation.shared_memory.flag_position
+                visual_grid[fx, fy] = 5  # Bandeira (roxo)
             # Marcar posições dos agentes vivos
             for agent in simulation.agents:
                 if agent.alive:
                     x, y = agent.position
                     visual_grid[x, y] = 4  # Agente
         
-        # Configurar mapa de cores
-        cmap = plt.cm.colors.ListedColormap(['white', 'red', 'lightblue', 'gold', 'green'])
-        bounds = [0, 1, 2, 3, 4, 5]
+        # Configurar mapa de cores (adicionar roxo para bandeira)
+        cmap = plt.cm.colors.ListedColormap(['white', 'red', 'lightblue', 'gold', 'green', 'purple'])
+        bounds = [0, 1, 2, 3, 4, 5, 6]
         norm = plt.cm.colors.BoundaryNorm(bounds, cmap.N)
         
         im = self.ax.imshow(visual_grid, cmap=cmap, norm=norm, interpolation='nearest')
@@ -465,12 +475,20 @@ class IAProjectGUI:
                                 fontsize=8, color='gray', alpha=0.5)
         
         # Configurações do gráfico
-        approach = "B" if is_approach_b else ("A" if simulation.homogeneous else "C")
-        title_suffix = "Exploração Completa" if is_approach_b else "Caça ao Tesouro"
+        if is_approach_b:
+            approach = "B"
+            title_suffix = "Exploração Completa"
+        elif is_approach_c:
+            approach = "C"
+            title_suffix = "Busca da Bandeira 🚩"
+        else:
+            approach = "A"
+            title_suffix = "Caça ao Tesouro"
+        
         self.ax.set_title(f'Abordagem {approach} - {title_suffix} ({simulation.num_agents} agentes)', 
                          fontsize=12, fontweight='bold')
         
-        # Legenda ajustada para abordagem B
+        # Legenda ajustada por abordagem
         from matplotlib.patches import Patch
         if is_approach_b:
             legend_elements = [
@@ -479,7 +497,18 @@ class IAProjectGUI:
                 Patch(facecolor='lightblue', edgecolor='black', label='Livre Explorada'),
                 Patch(facecolor='green', edgecolor='black', label='Agente')
             ]
+        elif is_approach_c:
+            # Legenda específica para Abordagem C
+            legend_elements = [
+                Patch(facecolor='white', edgecolor='black', label='Desconhecido'),
+                Patch(facecolor='red', edgecolor='black', label='Bomba'),
+                Patch(facecolor='lightblue', edgecolor='black', label='Livre Explorada'),
+                Patch(facecolor='gold', edgecolor='black', label='Tesouro'),
+                Patch(facecolor='green', edgecolor='black', label='Agente'),
+                Patch(facecolor='purple', edgecolor='black', label='🚩 Bandeira')
+            ]
         else:
+            # Abordagem A
             legend_elements = [
                 Patch(facecolor='white', edgecolor='black', label='Desconhecido'),
                 Patch(facecolor='red', edgecolor='black', label='Bomba'),
@@ -562,14 +591,24 @@ class IAProjectGUI:
                         max_steps=max_steps
                     )
             elif approach == "C":
-                # TODO: Implementar abordagem C
-                self.current_simulation = ApproachASimulation(
-                    num_agents=num_agents,
-                    bomb_ratio=bomb_ratio,
-                    treasure_count=treasure_count,
-                    homogeneous=False,
-                    max_steps=max_steps
-                )
+                # Abordagem C: Encontrar a bandeira
+                if group_type == "baseline":
+                    # Baseline C: A*
+                    self.current_simulation = BaselineC_AStar(
+                        bomb_ratio=bomb_ratio,
+                        treasure_count=treasure_count,
+                        max_steps=max_steps
+                    )
+                else:
+                    # Homogêneo ou Heterogêneo
+                    homogeneous = (group_type == "homogeneous")
+                    self.current_simulation = ApproachCSimulation(
+                        num_agents=num_agents,
+                        bomb_ratio=bomb_ratio,
+                        treasure_count=treasure_count,
+                        homogeneous=homogeneous,
+                        max_steps=max_steps
+                    )
             else:
                 self.current_simulation = BaselineSimulation(
                     num_agents=num_agents,
@@ -595,6 +634,13 @@ class IAProjectGUI:
                 
                 # Executar um passo
                 self.execute_simulation_step(step)
+                
+                # VERIFICAÇÃO CRÍTICA: Se Abordagem C e bandeira foi encontrada, terminar
+                if (approach == "C" and 
+                    hasattr(self.current_simulation, 'shared_memory') and
+                    self.current_simulation.shared_memory.flag_found):
+                    self.root.after(0, self.log, "🚩 BANDEIRA ENCONTRADA! Encerrando simulação...", "SUCCESS")
+                    break
                 
                 # Atualizar progresso
                 progress = (step / max_steps) * 100
@@ -631,7 +677,9 @@ class IAProjectGUI:
             log_msg = agent.move_to(next_pos, self.current_simulation.shared_memory, self.current_simulation.env)
             
             # Adicionar log na interface
-            if "TESOURO" in log_msg:
+            if "BANDEIRA" in log_msg:
+                self.root.after(0, self.log, log_msg, "SUCCESS")
+            elif "TESOURO" in log_msg:
                 self.root.after(0, self.log, log_msg, "TREASURE")
             elif "DESTRUÍDO" in log_msg:
                 self.root.after(0, self.log, log_msg, "ERROR")
@@ -678,7 +726,24 @@ class IAProjectGUI:
                 self.root.after(0, lambda: self.footer_label.config(text=f"👥 Agentes: {agents_alive} | ⏱️ Tempo: {elapsed_time:.1f}s | 🌍 Explorado: {explored_pct:.1f}%"))
             if step % 50 == 0:
                 self.root.after(0, self.log, f"Passo {step}: {explored_pct:.1f}% explorado, {agents_alive} agentes vivos", "INFO")
+        elif approach == "C":
+            # Abordagem C: mostrar status da bandeira
+            flag_found = self.current_simulation.shared_memory.flag_found if hasattr(self.current_simulation, 'shared_memory') else False
+            treasures_found = len(self.current_simulation.shared_memory.treasures_collected) if hasattr(self.current_simulation, 'shared_memory') else 0
+            
+            flag_status = "✅ Encontrada" if flag_found else "❌ Procurando..."
+            self.root.after(0, self.update_status, "Bandeira:", flag_status)
+            if treasures_found > 0:
+                self.root.after(0, self.update_status, "Tesouros:", f"{treasures_found}")
+            
+            if self.start_time:
+                elapsed_time = time.time() - self.start_time
+                self.root.after(0, lambda: self.footer_label.config(text=f"👥 Agentes: {agents_alive} | ⏱️ Tempo: {elapsed_time:.1f}s | 🚩 Bandeira: {'✅' if flag_found else '❌'}"))
+            
+            if step % 50 == 0:
+                self.root.after(0, self.log, f"Passo {step}: Bandeira {'ENCONTRADA' if flag_found else 'não encontrada'}, {agents_alive} agentes vivos", "INFO")
         else:
+            # Abordagem A
             treasures_found = len(self.current_simulation.shared_memory.treasures_found)
             total_treasures = self.current_simulation.env.treasure_count
             self.root.after(0, self.update_status, "Tesouros Encontrados:", f"{treasures_found}/{total_treasures}")
@@ -720,15 +785,46 @@ class IAProjectGUI:
             else:
                 self.root.after(0, self.log, f"⚠️ SIMULAÇÃO CONCLUÍDA SEM SUCESSO. Ambiente explorado: {explored_pct:.1f}%", "WARNING")
         elif approach == "C":
-            treasures_found = len(self.current_simulation.shared_memory.treasures_found)
-            total_treasures = self.current_simulation.env.treasure_count
-            success = treasures_found > 0
-            self.root.after(0, self.update_status, "Tesouros Encontrados:", f"{treasures_found}/{total_treasures}")
-            self.root.after(0, lambda: self.footer_label.config(text=f"👥 Agentes: {agents_alive} | ⏱️ Tempo: {execution_time:.1f}s | 🏆 Tesouros: {treasures_found}"))
+            # Abordagem C: Sucesso = Bandeira encontrada
+            flag_found = False
+            if hasattr(self.current_simulation, 'shared_memory'):
+                flag_found = self.current_simulation.shared_memory.flag_found
+            elif hasattr(self.current_simulation, 'metrics'):
+                flag_found = self.current_simulation.metrics.get('flag_found', False)
+            
+            treasures_found = 0
+            if hasattr(self.current_simulation, 'shared_memory'):
+                treasures_found = len(self.current_simulation.shared_memory.treasures_collected)
+            
+            # Custo do caminho (se disponível)
+            path_cost = 0
+            if hasattr(self.current_simulation, 'metrics'):
+                path_cost = self.current_simulation.metrics.get('min_path_cost', 0)
+            
+            success = flag_found
+            
+            # Atualizar status
+            self.root.after(0, self.update_status, "Bandeira:", "✅ Encontrada" if flag_found else "❌ Não encontrada")
+            if treasures_found > 0:
+                self.root.after(0, self.update_status, "Tesouros Coletados:", f"{treasures_found}")
+            if path_cost > 0 and path_cost != float('inf'):
+                self.root.after(0, self.update_status, "Custo do Caminho:", f"{path_cost:.2f}")
+            
+            # Footer com informações da Abordagem C
+            self.root.after(0, lambda: self.footer_label.config(
+                text=f"👥 Agentes: {agents_alive} | ⏱️ Tempo: {execution_time:.1f}s | 🚩 Bandeira: {'✅' if flag_found else '❌'}"
+            ))
+            
+            # Log de conclusão
             if success:
-                self.root.after(0, self.log, f"✅ SIMULAÇÃO CONCLUÍDA COM SUCESSO! Tesouros: {treasures_found}/{total_treasures}", "SUCCESS")
+                msg = f"✅ SIMULAÇÃO CONCLUÍDA COM SUCESSO! Bandeira encontrada!"
+                if path_cost > 0 and path_cost != float('inf'):
+                    msg += f" | Custo do caminho: {path_cost:.2f}"
+                if treasures_found > 0:
+                    msg += f" | Tesouros coletados: {treasures_found}"
+                self.root.after(0, self.log, msg, "SUCCESS")
             else:
-                self.root.after(0, self.log, f"⚠️ SIMULAÇÃO CONCLUÍDA SEM SUCESSO. Tesouros: {treasures_found}/{total_treasures}", "WARNING")
+                self.root.after(0, self.log, f"⚠️ SIMULAÇÃO CONCLUÍDA SEM SUCESSO. Bandeira não encontrada.", "WARNING")
         # Armazenar resultados
         result = {
             'approach': approach,
@@ -834,6 +930,8 @@ class IAProjectGUI:
                 results = compare_approaches()
             elif approach == "B":
                 results = compare_approaches_b()
+            elif approach == "C":
+                results = compare_approaches_c()
             else:
                 self.log(f"Comparação não implementada para abordagem {approach}", "WARNING")
                 return
