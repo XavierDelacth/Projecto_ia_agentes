@@ -1,7 +1,7 @@
-# comparative_analysis.py - VERSÃO CORRIGIDA FINAL
-# ✅ FUNCIONA COM 1 OU MAIS SIMULAÇÕES
-# ✅ PROTEÇÃO TOTAL CONTRA ERROS
-# ✅ VISUALIZAÇÃO IMEDIATA
+# comparative_analysis.py - VERSÃO MELHORADA COM TABELAS SEPARADAS
+# ✅ Tabelas específicas para cada abordagem (A, B, C)
+# ✅ Métricas relevantes por abordagem
+# ✅ Sem valores "nan"
 
 import numpy as np
 import pandas as pd
@@ -114,9 +114,10 @@ class MetricsCalculator:
             metrics['reward_risk_ratio'] = MetricsCalculator.safe_div(treasures_found, bombs_triggered + 1)
             metrics['explored_percentage'] = simulation.metrics.get('explored_percentage', 0.0)
             metrics['avg_steps_to_treasure'] = MetricsCalculator.safe_div(steps_taken, max(treasures_found, 1))
+            metrics['execution_time'] = execution_time
         except Exception as e:
             print(f"Erro métricas A: {e}")
-            metrics = {'treasure_percentage': 0.0, 'success_rate': 0.0}
+            metrics = {'treasure_percentage': 0.0, 'success_rate': 0.0, 'execution_time': 0.0}
         return metrics
     
     @staticmethod
@@ -147,9 +148,10 @@ class MetricsCalculator:
             metrics['success_rate'] = 1.0 if metrics['success'] else 0.0
             metrics['safety_coverage_score'] = MetricsCalculator.safe_div(explored_pct * metrics['survival_rate'], 100)
             metrics['redundancy_rate'] = 0.0
+            metrics['execution_time'] = execution_time
         except Exception as e:
             print(f"Erro métricas B: {e}")
-            metrics = {'explored_percentage': 0.0, 'success_rate': 0.0}
+            metrics = {'explored_percentage': 0.0, 'success_rate': 0.0, 'execution_time': 0.0}
         return metrics
     
     @staticmethod
@@ -162,7 +164,6 @@ class MetricsCalculator:
             total_agents = max(getattr(simulation, 'num_agents', 1), 1)
             flag_found = simulation.metrics.get('flag_found', False)
             
-            # Coletar passos - CORRIGIDO
             steps_list = []
             if hasattr(simulation, 'agents'):
                 for agent in simulation.agents:
@@ -203,6 +204,7 @@ class MetricsCalculator:
             metrics['flag_found'] = flag_found
             metrics['success'] = simulation.metrics.get('success', False)
             metrics['success_rate'] = 1.0 if metrics['success'] else 0.0
+            metrics['execution_time'] = execution_time
             
             if flag_found:
                 metrics['overall_score'] = (
@@ -216,7 +218,7 @@ class MetricsCalculator:
             print(f"Erro métricas C: {e}")
             import traceback
             traceback.print_exc()
-            metrics = {'min_steps_to_flag': 0.0, 'success_rate': 0.0}
+            metrics = {'min_steps_to_flag': 0.0, 'success_rate': 0.0, 'execution_time': 0.0}
         return metrics
 
 class ComparativeAnalyzer:
@@ -284,30 +286,6 @@ class ComparativeAnalyzer:
             comparison['best_value'] = best[1]['mean']
         
         return comparison
-    
-    def generate_comparison_table(self):
-        data = []
-        for approach in ['A', 'B', 'C']:
-            analysis = self.analyze_approach(approach)
-            if analysis:
-                for group_type in ['homogeneous', 'heterogeneous', 'baseline']:
-                    group_data = analysis['groups'][group_type]
-                    if group_data['count'] > 0:
-                        row = {'Abordagem': approach, 'Grupo': group_type.title(), 'Simulações': group_data['count']}
-                        metrics = group_data['metrics']
-                        
-                        if approach == 'A':
-                            row['Tesouros (%)'] = f"{metrics.get('treasure_percentage', {}).get('mean', 0):.1f}"
-                            row['Eficiência'] = f"{metrics.get('treasures_per_second', {}).get('mean', 0):.2f}"
-                        elif approach == 'B':
-                            row['Explorado (%)'] = f"{metrics.get('explored_percentage', {}).get('mean', 0):.1f}"
-                            row['Sobreviv. (%)'] = f"{metrics.get('survival_rate', {}).get('mean', 0):.1f}"
-                        elif approach == 'C':
-                            row['Sucesso (%)'] = f"{metrics.get('success_rate', {}).get('mean', 0) * 100:.1f}"
-                            row['Passos'] = f"{metrics.get('min_steps_to_flag', {}).get('mean', 0):.1f}"
-                        
-                        data.append(row)
-        return pd.DataFrame(data) if data else pd.DataFrame()
 
 class ComparisonVisualizer:
     def __init__(self, analyzer):
@@ -322,7 +300,7 @@ class ComparisonVisualizer:
         
         approaches_data = {app: self.analyzer.analyze_approach(app) for app in ['A', 'B', 'C']}
         
-        titles = {'A': '🅰️ ABORDAGEM A\nMaximizar Tesouros', 'B': '🅱️ ABORDAGEM B\nExploração Total', 'C': '🅲 ABORDAGEM C\nOtimizar Caminho'}
+        titles = {'A': '🅰️ ABORDAGEM A\nMaximizar Tesouros', 'B': '🅱️ ABORDAGEM B\nExploração Total', 'C': '©️ ABORDAGEM C\nOtimizar Caminho'}
         
         for col, approach in enumerate(['A', 'B', 'C']):
             ax = fig.add_subplot(gs[0, col])
@@ -397,38 +375,226 @@ class ComparisonVisualizer:
             ax.set_ylim(ylim)
     
     def create_summary_table(self, parent_frame):
+        """✅ NOVA VERSÃO: Cria tabelas separadas por abordagem com métricas relevantes"""
         from tkinter import ttk
-        df = self.analyzer.generate_comparison_table()
         
-        if df.empty:
-            tk.Label(parent_frame, text="⚠️ Nenhum dado\n\nExecute simulações!", font=('Arial', 12), fg='orange').pack(pady=50)
+        # Verificar se há dados
+        total_data = sum(len(self.analyzer.storage.get_results_by_approach(app)) for app in ['A', 'B', 'C'])
+        if total_data == 0:
+            tk.Label(parent_frame, text="⚠️ Nenhum dado\n\nExecute simulações!", 
+                    font=('Arial', 12), fg='orange').pack(pady=50)
             return
         
-        table_frame = ttk.Frame(parent_frame)
+        # Criar notebook com abas
+        notebook = ttk.Notebook(parent_frame)
+        notebook.pack(fill='both', expand=True, padx=10, pady=10)
+        
+        # ===== ABORDAGEM A: MAXIMIZAR TESOUROS =====
+        self._create_approach_a_table(notebook)
+        
+        # ===== ABORDAGEM B: EXPLORAÇÃO COMPLETA =====
+        self._create_approach_b_table(notebook)
+        
+        # ===== ABORDAGEM C: ENCONTRAR BANDEIRA =====
+        self._create_approach_c_table(notebook)
+    
+    def _create_approach_a_table(self, notebook):
+        """Tabela específica para Abordagem A"""
+        from tkinter import ttk
+        
+        frame = ttk.Frame(notebook)
+        notebook.add(frame, text="🅰️ Abordagem A - Tesouros")
+        
+        results = self.analyzer.storage.get_results_by_approach('A')
+        
+        if not results:
+            tk.Label(frame, text="⚠️ Sem dados para Abordagem A\n\nExecute simulações!", 
+                    font=('Arial', 11), fg='orange').pack(pady=50)
+            return
+        
+        # Preparar dados
+        table_data = []
+        for r in results:
+            metrics = r.get('metrics', {})
+            params = r.get('parameters', {})
+            
+            row = {
+                'Grupo': r.get('group_type', '').title(),
+                'Agentes': params.get('num_agents', '-'),
+                'Bombas (%)': f"{params.get('bomb_ratio', 0) * 100:.0f}",
+                'Tesouros Meta': params.get('treasure_count', '-'),
+                'Tesouros (%)': f"{metrics.get('treasure_percentage', 0):.1f}",
+                
+                'Tesouros/s': f"{metrics.get('treasures_per_second', 0):.3f}",
+                'Risco': f"{metrics.get('risk_ratio', 0):.2f}",
+                'Recompensa/Risco': f"{metrics.get('reward_risk_ratio', 0):.2f}",
+                'Eficiência': f"{metrics.get('exploration_efficiency', 0):.3f}",
+                'Tempo (s)': f"{metrics.get('execution_time', 0):.2f}"
+            }
+            table_data.append(row)
+        
+        df = pd.DataFrame(table_data)
+        self._render_table(frame, df, "Abordagem A: Maximizar Tesouros (>50%)")
+    
+    def _create_approach_b_table(self, notebook):
+        """Tabela específica para Abordagem B"""
+        from tkinter import ttk
+        
+        frame = ttk.Frame(notebook)
+        notebook.add(frame, text="🅱️ Abordagem B - Exploração")
+        
+        results = self.analyzer.storage.get_results_by_approach('B')
+        
+        if not results:
+            tk.Label(frame, text="⚠️ Sem dados para Abordagem B\n\nExecute simulações!", 
+                    font=('Arial', 11), fg='orange').pack(pady=50)
+            return
+        
+        # Preparar dados
+        table_data = []
+        for r in results:
+            metrics = r.get('metrics', {})
+            params = r.get('parameters', {})
+            
+            row = {
+                'Grupo': r.get('group_type', '').title(),
+                'Agentes': params.get('num_agents', '-'),
+                'Bombas (%)': f"{params.get('bomb_ratio', 0) * 100:.0f}",
+                'Explorado (%)': f"{metrics.get('explored_percentage', 0):.1f}",
+                
+                
+                'Exploração Segura (%)': f"{metrics.get('safe_exploration_rate', 0):.1f}",
+                'Células/s': f"{metrics.get('cells_per_second', 0):.2f}",
+                'Bombas Identificadas': f"{metrics.get('bombs_identified', 0):.0f}",
+                
+                'Tempo (s)': f"{metrics.get('execution_time', 0):.2f}"
+            }
+            table_data.append(row)
+        
+        df = pd.DataFrame(table_data)
+        self._render_table(frame, df, "Abordagem B: Exploração Total (100% + Sobreviventes)")
+    
+    def _create_approach_c_table(self, notebook):
+        """Tabela específica para Abordagem C"""
+        from tkinter import ttk
+        
+        frame = ttk.Frame(notebook)
+        notebook.add(frame, text="©️ Abordagem C - Bandeira")
+        
+        results = self.analyzer.storage.get_results_by_approach('C')
+        
+        if not results:
+            tk.Label(frame, text="⚠️ Sem dados para Abordagem C\n\nExecute simulações!", 
+                    font=('Arial', 11), fg='orange').pack(pady=50)
+            return
+        
+        # Preparar dados
+        table_data = []
+        for r in results:
+            metrics = r.get('metrics', {})
+            params = r.get('parameters', {})
+            
+            # Verificar valores infinitos
+            min_cost = metrics.get('min_path_cost', 0)
+            avg_cost = metrics.get('avg_path_cost', 0)
+            min_cost_str = "∞" if min_cost == float('inf') else f"{min_cost:.2f}"
+            avg_cost_str = "∞" if avg_cost == float('inf') else f"{avg_cost:.2f}"
+            
+            row = {
+                'Grupo': r.get('group_type', '').title(),
+                'Agentes': params.get('num_agents', '-'),
+                'Bombas (%)': f"{params.get('bomb_ratio', 0) * 100:.0f}",
+                'Bandeira Encontrada': '✅' if metrics.get('flag_found', False) else '❌',
+                
+                'Passos (min)': f"{metrics.get('min_steps_to_flag', 0):.1f}",
+                'Passos (média)': f"{metrics.get('avg_steps_to_flag', 0):.1f}",
+                'Eficiência (%)': f"{metrics.get('path_efficiency', 0):.1f}",
+                'Dist. Ótima': f"{metrics.get('optimal_distance', 0):.0f}",
+                'Tempo (s)': f"{metrics.get('execution_time', 0):.2f}"
+            }
+            table_data.append(row)
+        
+        df = pd.DataFrame(table_data)
+        self._render_table(frame, df, "Abordagem C: Encontrar Bandeira (Otimizar Caminho)")
+    
+    def _render_table(self, parent, df, title):
+        """Renderiza uma tabela com scrollbars"""
+        from tkinter import ttk
+        
+        # Título
+        title_label = tk.Label(parent, text=title, font=('Arial', 12, 'bold'), 
+                              bg='#e8f4f8', pady=10)
+        title_label.pack(fill='x', padx=10, pady=(10, 0))
+        
+        # Frame da tabela
+        table_frame = ttk.Frame(parent)
         table_frame.pack(fill='both', expand=True, padx=10, pady=10)
         
+        # Scrollbars
         vsb = ttk.Scrollbar(table_frame, orient="vertical")
         hsb = ttk.Scrollbar(table_frame, orient="horizontal")
         
+        # Treeview
         tree = ttk.Treeview(table_frame, columns=list(df.columns), show='headings',
                            yscrollcommand=vsb.set, xscrollcommand=hsb.set)
         
         vsb.config(command=tree.yview)
         hsb.config(command=tree.xview)
         
+        # Configurar colunas
         for col in df.columns:
             tree.heading(col, text=col)
-            tree.column(col, width=100, anchor='center')
+            
+            # Ajustar largura baseado no conteúdo
+            if col in ['Grupo', 'Bandeira Encontrada']:
+                width = 120
+            elif col in ['Agentes', 'Bombas (%)', 'Tesouros Meta']:
+                width = 80
+            else:
+                width = 110
+            
+            tree.column(col, width=width, anchor='center')
         
-        for i, row in df.iterrows():
-            tree.insert("", "end", values=list(row))
+        # Adicionar dados com cores alternadas
+        for idx, row in df.iterrows():
+            tag = 'evenrow' if idx % 2 == 0 else 'oddrow'
+            tree.insert("", "end", values=list(row), tags=(tag,))
         
+        # Estilizar linhas
+        tree.tag_configure('evenrow', background='#f9f9f9')
+        tree.tag_configure('oddrow', background='#ffffff')
+        
+        # Layout
         tree.grid(row=0, column=0, sticky='nsew')
         vsb.grid(row=0, column=1, sticky='ns')
         hsb.grid(row=1, column=0, sticky='ew')
         
         table_frame.grid_columnconfigure(0, weight=1)
         table_frame.grid_rowconfigure(0, weight=1)
+        
+        # Estatísticas resumidas
+        self._add_summary_stats(parent, df)
+    
+    def _add_summary_stats(self, parent, df):
+        """Adiciona estatísticas resumidas abaixo da tabela"""
+        stats_frame = tk.Frame(parent, bg='#f0f0f0', relief='ridge', bd=2)
+        stats_frame.pack(fill='x', padx=10, pady=10)
+        
+        # Calcular estatísticas
+        total_rows = len(df)
+        
+        stats_text = f"📊 Total de simulações: {total_rows}"
+        
+        # Adicionar estatísticas por grupo se houver coluna 'Grupo'
+        if 'Grupo' in df.columns:
+            groups = df['Grupo'].value_counts()
+            stats_text += "  |  "
+            for group, count in groups.items():
+                stats_text += f"{group}: {count}  "
+        
+        stats_label = tk.Label(stats_frame, text=stats_text, bg='#f0f0f0', 
+                              font=('Arial', 10), pady=5)
+        stats_label.pack()
 
 def create_comparison_window(root, storage):
     from tkinter import ttk, messagebox
@@ -455,7 +621,7 @@ def create_comparison_window(root, storage):
         tk.Label(graphs_frame, text=f"⚠️ Erro:\n{str(e)}\n\nExecute mais simulações", 
                 font=('Arial', 11), fg='red').pack(pady=50)
     
-    # Tabela
+    # Tabela (NOVA VERSÃO)
     table_frame = ttk.Frame(notebook)
     notebook.add(table_frame, text="📋 Tabela")
     try:
@@ -504,4 +670,7 @@ def create_comparison_window(root, storage):
     return window
 
 if __name__ == "__main__":
-    print("Sistema de Análise Comparativa - CORRIGIDO")
+    print("Sistema de Análise Comparativa - VERSÃO MELHORADA")
+    print("✅ Tabelas separadas por abordagem")
+    print("✅ Métricas relevantes por abordagem")
+    print("✅ Sem valores 'nan'")
