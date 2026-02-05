@@ -124,6 +124,32 @@
         "explored_percentage": 0,
         "avg_steps_to_treasure": 0.2
       }
+    },
+    {
+      "timestamp": "2026-02-05T01:20:23.244759",
+      "approach": "A",
+      "group_type": "heterogeneous",
+      "parameters": {
+        "num_agents": 4,
+        "bomb_ratio": 0.2,
+        "treasure_count": 10,
+        "max_steps": 150,
+        "homogeneous": false
+      },
+      "metrics": {
+        "treasure_percentage": 70.0,
+        "treasures_per_second": 0.11683366253475105,
+        "treasures_per_step": 7.0,
+        "bombs_triggered": 4,
+        "risk_ratio": 1.0,
+        "exploration_efficiency": 7.0,
+        "success": false,
+        "success_rate": 0.0,
+        "reward_risk_ratio": 1.4,
+        "explored_percentage": 0,
+        "avg_steps_to_treasure": 0.14285714285714285,
+        "execution_time": 59.914239168167114
+      }
     }
   ],
   "B": [
@@ -1502,6 +1528,34 @@
         "success_rate": 0.0,
         "safety_coverage_score": 0.0,
         "redundancy_rate": 0.0
+      }
+    },
+    {
+      "timestamp": "2026-02-05T01:20:56.210415",
+      "approach": "B",
+      "group_type": "homogeneous",
+      "parameters": {
+        "num_agents": 4,
+        "bomb_ratio": 0.2,
+        "treasure_count": 10,
+        "max_steps": 150,
+        "homogeneous": true
+      },
+      "metrics": {
+        "explored_percentage": 22.22222222222222,
+        "safe_exploration_rate": 22.22222222222222,
+        "agents_alive": 0,
+        "survival_rate": 0.0,
+        "bombs_triggered": 4,
+        "cells_per_second": 2.5436056666019793,
+        "cells_per_step": 18.0,
+        "bombs_identified": 3,
+        "safe_decisions": 18,
+        "success": false,
+        "success_rate": 0.0,
+        "safety_coverage_score": 0.0,
+        "redundancy_rate": 0.0,
+        "execution_time": 7.076568603515625
       }
     }
   ],
@@ -3232,6 +3286,105 @@
         "success": false,
         "success_rate": 0.0,
         "overall_score": 999999.0
+      }
+    },
+    {
+      "timestamp": "2026-02-05T01:21:33.610287",
+      "approach": "C",
+      "group_type": "heterogeneous",
+      "parameters": {
+        "num_agents": 4,
+        "bomb_ratio": 0.2,
+        "treasure_count": 10,
+        "max_steps": 150,
+        "homogeneous": false
+      },
+      "metrics": {
+        "avg_steps_to_flag": 15.5,
+        "min_steps_to_flag": 1.0,
+        "max_steps_to_flag": 38.0,
+        "min_path_cost": 0.0,
+        "avg_path_cost": 0.0,
+        "optimal_distance": 8.0,
+        "actual_distance": 1.0,
+        "path_deviation": -7.0,
+        "path_efficiency": 800.0,
+        "bombs_triggered": 4,
+        "risk_ratio": 1.0,
+        "treasures_collected": 0,
+        "time_to_flag": 17.25887680053711,
+        "steps_per_second": 0.05794119811834332,
+        "flag_found": false,
+        "success": false,
+        "success_rate": 0.0,
+        "execution_time": 17.25887680053711,
+        "overall_score": 999999.0
+      }
+    },
+    {
+      "timestamp": "2026-02-05T01:29:46.488984",
+      "approach": "C",
+      "group_type": "heterogeneous",
+      "parameters": {
+        "num_agents": 4,
+        "bomb_ratio": 0.2,
+        "treasure_count": 10,
+        "max_steps": 150,
+        "homogeneous": false
+      },
+      "metrics": {
+        "avg_steps_to_flag": 6.0,
+        "min_steps_to_flag": 6.0,
+        "max_steps_to_flag": 6.0,
+        "min_path_cost": 0.0,
+        "avg_path_cost": 0.0,
+        "optimal_distance": 6.0,
+        "actual_distance": 6.0,
+        "path_deviation": 0.0,
+        "path_efficiency": 100.0,
+        "bombs_triggered": 4,
+        "risk_ratio": 1.0,
+        "treasures_collected": 2,
+        "time_to_flag": 2.8323824405670166,
+        "steps_per_second": 0.3530596665469404,
+        "flag_found": true,
+        "success": false,
+        "success_rate": 0.0,
+        "execution_time": 2.8323824405670166,
+        "overall_score": 14.4
+      }
+    },
+    {
+      "timestamp": "2026-02-05T01:30:12.805777",
+      "approach": "C",
+      "group_type": "heterogeneous",
+      "parameters": {
+        "num_agents": 4,
+        "bomb_ratio": 0.2,
+        "treasure_count": 10,
+        "max_steps": 150,
+        "homogeneous": false
+      },
+      "metrics": {
+        "avg_steps_to_flag": 10.5,
+        "min_steps_to_flag": 2.0,
+        "max_steps_to_flag": 28.0,
+        "min_path_cost": 0.0,
+        "avg_path_cost": 0.0,
+        "optimal_distance": 6.0,
+        "actual_distance": 2.0,
+        "path_deviation": -4.0,
+        "path_efficiency": 300.0,
+        "bombs_triggered": 4,
+        "risk_ratio": 1.0,
+        "treasures_collected": 2,
+        "time_to_flag": 12.762066125869751,
+        "steps_per_second": 0.07835721819156839,
+        "flag_found": true,
+        "success": false,
+        "success_rate": 0.0,
+        "execution_time": 12.762066125869751,
+        "overall_score": 12.8
       }
     }
   ]

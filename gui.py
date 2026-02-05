@@ -839,7 +839,8 @@ class IAProjectGUI:
                 path_cost = self.current_simulation.metrics.get('min_path_cost', 0)
             
             success = flag_found
-            
+            self.current_simulation.metrics['flag_found'] = flag_found
+            self.current_simulation.metrics['treasures_found'] = treasures_found
             # Atualizar status
             self.root.after(0, self.update_status, "Bandeira:", "✅ Encontrada" if flag_found else "❌ Não encontrada")
             if treasures_found > 0:
@@ -862,6 +863,8 @@ class IAProjectGUI:
                 self.root.after(0, self.log, msg, "SUCCESS")
             else:
                 self.root.after(0, self.log, f"⚠️ SIMULAÇÃO CONCLUÍDA SEM SUCESSO. Bandeira não encontrada.", "WARNING")
+        
+        self.current_simulation.metrics['execution_time'] = execution_time
         # Armazenar resultados
         result = {
             'approach': approach,
